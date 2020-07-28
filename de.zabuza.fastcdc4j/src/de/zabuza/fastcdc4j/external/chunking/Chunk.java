@@ -6,7 +6,7 @@ package de.zabuza.fastcdc4j.external.chunking;
 public interface Chunk {
 	byte[] getData();
 
-	int getOffset();
+	long getOffset();
 
 	int getLength();
 

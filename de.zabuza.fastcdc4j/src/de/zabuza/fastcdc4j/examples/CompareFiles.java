@@ -20,7 +20,7 @@ public final class CompareFiles {
 	 *
 	 * @param args Not supported
 	 */
-	public static void main(final String[] args) throws IOException {
+	public static void main(final String[] args) {
 		Path first = Path.of("C:\\Users\\Zabuza\\Desktop\\data1.txt");
 		Path second = Path.of("C:\\Users\\Zabuza\\Desktop\\data2.txt");
 
@@ -40,6 +40,13 @@ public final class CompareFiles {
 			hashes2.add(chunk.getHexHash());
 		}
 		Set<String> uniqueHashes2 = new HashSet<>(hashes2);
+
+		System.out.println("File1 hashes:");
+		uniqueHashes1.forEach(System.out::println);
+		System.out.println();
+		System.out.println("File2 hashes:");
+		uniqueHashes2.forEach(System.out::println);
+		System.out.println();
 
 		System.out.printf("File 1 chunks: %d total, %d unique, %d duplicate%n", hashes1.size(), uniqueHashes1.size(),
 				hashes1.size() - uniqueHashes1.size());
@@ -61,7 +68,7 @@ public final class CompareFiles {
 			}
 		}
 
-		System.out.printf("file1 -> file2: %d unknown%n", file1ToFile2Unknown.size());
-		System.out.printf("file2 -> file1: %d unknown%n", file2ToFile1Unknown.size());
+		System.out.printf("File1 -> File2: %d unknown%n", file1ToFile2Unknown.size());
+		System.out.printf("File2 -> File1: %d unknown%n", file2ToFile1Unknown.size());
 	}
 }
