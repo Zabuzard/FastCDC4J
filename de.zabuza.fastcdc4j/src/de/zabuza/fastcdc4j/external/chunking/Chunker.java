@@ -1,9 +1,6 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -29,11 +26,11 @@ public interface Chunker {
 				return chunk(Files.walk(path));
 			}
 			if (Files.isRegularFile(path)) {
-				return chunk(Files.newInputStream(path), Files.size(path));
+				return chunk(new BufferedInputStream(Files.newInputStream(path)), Files.size(path));
 			}
 		} catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
-		throw new IllegalArgumentException("Only regular file or directory are supported");
+		throw new IllegalArgumentException("Only existing regular files or directories are supported");
 	}
 }
