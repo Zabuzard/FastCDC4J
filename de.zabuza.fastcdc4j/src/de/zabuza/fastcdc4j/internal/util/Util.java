@@ -21,11 +21,11 @@ public final class Util {
 		return new String(hexChars, StandardCharsets.UTF_8);
 	}
 
-	public static byte[] hashSha1(byte[] data) {
+	public static byte[] hash(String method, byte[] data) {
 		try {
-			return MessageDigest.getInstance("SHA-1").digest(data);
+			return MessageDigest.getInstance(method).digest(data);
 		} catch (NoSuchAlgorithmException e) {
-			throw new IllegalStateException("SHA-1 must be supported");
+			throw new IllegalStateException("Hash method must be supported", e);
 		}
 	}
 }

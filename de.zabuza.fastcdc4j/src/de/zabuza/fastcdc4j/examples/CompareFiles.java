@@ -4,7 +4,6 @@ import de.zabuza.fastcdc4j.external.chunking.Chunk;
 import de.zabuza.fastcdc4j.external.chunking.Chunker;
 import de.zabuza.fastcdc4j.external.chunking.ChunkerBuilder;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;

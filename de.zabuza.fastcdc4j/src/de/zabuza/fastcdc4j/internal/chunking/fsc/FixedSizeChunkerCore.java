@@ -7,13 +7,16 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 public final class FixedSizeChunkerCore implements IterativeStreamChunkerCore {
-	// TODO Make configurable
-	private static final int CHUNK_SIZE = 1 * 1024 * 1024;
+	private final int chunkSize;
+
+	public FixedSizeChunkerCore(int chunkSize) {
+		this.chunkSize = chunkSize;
+	}
 
 	@Override
 	public byte[] readNextChunk(final InputStream stream, final long size, final long currentOffset) {
 		// Read up to CHUNK_SIZE many bytes
-		int length = currentOffset + CHUNK_SIZE <= size ? CHUNK_SIZE : (int) (size - currentOffset);
+		int length = currentOffset + chunkSize <= size ? chunkSize : (int) (size - currentOffset);
 
 		try {
 			return stream.readNBytes(length);

@@ -11,9 +11,11 @@ import java.util.NoSuchElementException;
 
 public final class IterativeStreamChunker implements Chunker {
 	private final IterativeStreamChunkerCore core;
+	private final String hashMethod;
 
-	public IterativeStreamChunker(IterativeStreamChunkerCore core) {
+	public IterativeStreamChunker(IterativeStreamChunkerCore core, String hashMethod) {
 		this.core = core;
+		this.hashMethod = hashMethod;
 	}
 
 	@Override
@@ -45,7 +47,7 @@ public final class IterativeStreamChunker implements Chunker {
 			byte[] data = core.readNextChunk(stream, size, currentOffset);
 
 			// TODO Make hash method configurable
-			Chunk chunk = new SimpleChunk(data, currentOffset, Util.hashSha1(data));
+			Chunk chunk = new SimpleChunk(data, currentOffset, Util.hash(hashMethod, data));
 
 			currentOffset += data.length;
 			return chunk;

@@ -1,5 +1,6 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
+import de.zabuza.fastcdc4j.internal.chunking.HashTables;
 import de.zabuza.fastcdc4j.internal.chunking.IterativeStreamChunker;
 import de.zabuza.fastcdc4j.internal.chunking.fastcdc.FastCdcChunkerCore;
 import de.zabuza.fastcdc4j.internal.chunking.fsc.FixedSizeChunkerCore;
@@ -8,25 +9,32 @@ import de.zabuza.fastcdc4j.internal.chunking.fsc.FixedSizeChunkerCore;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class ChunkerBuilder {
-	private ChunkerAlgorithm algorithm = ChunkerAlgorithm.FAST_CDC;
+	private ChunkerOption chunkerOption = ChunkerOption.FAST_CDC;
 	private Chunker chunker;
 	private IterativeStreamChunkerCore core;
+	private String hashMethod = "SHA-1";
+	private int expectedChunkSize = 8 * 1_024;
+	private HashTableOption hashTableOption = HashTableOption.BUZ_HASH;
+	private long[] hashTable;
 
 	public Chunker build() {
 		if (chunker != null) {
 			return chunker;
 		}
 
-		IterativeStreamChunkerCore coreToUse = core != null ? core : switch (algorithm) {
-			case FAST_CDC -> new FastCdcChunkerCore();
-			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore();
-			default -> throw new AssertionError();
+		long[] hashTableToUse = hashTable != null ? hashTable : switch (hashTableOption) {
+			case BUZ_HASH -> HashTables.getBuzHashTable();
 		};
-		return new IterativeStreamChunker(coreToUse);
+
+		IterativeStreamChunkerCore coreToUse = core != null ? core : switch (chunkerOption) {
+			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, hashTableToUse);
+			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore(expectedChunkSize);
+		};
+		return new IterativeStreamChunker(coreToUse, hashMethod);
 	}
 
-	public ChunkerBuilder setAlgorithm(final ChunkerAlgorithm algorithm) {
-		this.algorithm = algorithm;
+	public ChunkerBuilder setChunkerOption(final ChunkerOption chunkerOption) {
+		this.chunkerOption = chunkerOption;
 		return this;
 	}
 
@@ -37,6 +45,26 @@ public final class ChunkerBuilder {
 
 	public ChunkerBuilder setCore(final IterativeStreamChunkerCore core) {
 		this.core = core;
+		return this;
+	}
+
+	public ChunkerBuilder setHashMethod(final String hashMethod) {
+		this.hashMethod = hashMethod;
+		return this;
+	}
+
+	public ChunkerBuilder setExpectedChunkSize(final int expectedChunkSize) {
+		this.expectedChunkSize = expectedChunkSize;
+		return this;
+	}
+
+	public ChunkerBuilder setHashTableOption(final HashTableOption hashTableOption) {
+		this.hashTableOption = hashTableOption;
+		return this;
+	}
+
+	public ChunkerBuilder setHashTable(final long[] hashTable) {
+		this.hashTable = hashTable;
 		return this;
 	}
 }
