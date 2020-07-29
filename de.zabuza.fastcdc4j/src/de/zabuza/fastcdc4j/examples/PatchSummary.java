@@ -45,62 +45,15 @@ public final class PatchSummary {
 		PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
 		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild, currentBuild);
 		System.out.printf("%-20s %10d%n", "Patch size (byte):", summary.getPatchSize());
-		System.out.printf("%-20s %10d%n", "Chunks to add:", summary.getChunksToAdd().size());
-		System.out.printf("%-20s %10d%n", "Chunks to remove:", summary.getChunksToRemove().size());
-		System.out.printf("%-20s %10d%n", "Chunks to move:", summary.getChunksToMove().size());
-		System.out.printf("%-20s %10d%n", "Untouched chunks:", summary.getUntouchedChunks().size());
+		System.out.printf("%-20s %10d%n", "Chunks to add:", summary.getChunksToAdd()
+				.size());
+		System.out.printf("%-20s %10d%n", "Chunks to remove:", summary.getChunksToRemove()
+				.size());
+		System.out.printf("%-20s %10d%n", "Chunks to move:", summary.getChunksToMove()
+				.size());
+		System.out.printf("%-20s %10d%n", "Untouched chunks:", summary.getUntouchedChunks()
+				.size());
 	}
-
-	private static class ChunkMetadata {
-		private final String hexHash;
-		private final long offset;
-		private final int length;
-
-		public String getHexHash() {
-			return hexHash;
-		}
-
-		public long getOffset() {
-			return offset;
-		}
-
-		public int getLength() {
-			return length;
-		}
-
-		public ChunkMetadata(Chunk chunk) {
-			hexHash = chunk.getHexHash();
-			offset = chunk.getOffset();
-			length = chunk.getLength();
-		}
-	}
-
-	private static class BuildSummary {
-		private final Map<String, ChunkMetadata> hashToChunk = new HashMap<>();
-
-		public BuildSummary(Iterable<ChunkMetadata> chunks) {
-			chunks.forEach(chunk -> {
-				if (hashToChunk.containsKey(chunk.hexHash)) {
-					return;
-				}
-				hashToChunk.put(chunk.hexHash, chunk);
-			});
-		}
-
-		public Stream<ChunkMetadata> getChunks() {
-			return hashToChunk.values()
-					.stream();
-		}
-
-		public boolean containsChunk(ChunkMetadata chunk) {
-			return hashToChunk.containsKey(chunk.getHexHash());
-		}
-
-		public ChunkMetadata getChunk(String hash) {
-			return hashToChunk.get(hash);
-		}
-	}
-
 	private final BuildSummary previousBuildSummary;
 	private final BuildSummary currentBuildSummary;
 	private final List<ChunkMetadata> chunksToRemove = new ArrayList<>();
@@ -108,6 +61,11 @@ public final class PatchSummary {
 	private final List<ChunkMetadata> chunksToMove = new ArrayList<>();
 	private final List<ChunkMetadata> untouchedChunks = new ArrayList<>();
 	private int patchSize;
+	public PatchSummary(BuildSummary previousBuildSummary, BuildSummary currentBuildSummary) {
+		this.previousBuildSummary = previousBuildSummary;
+		this.currentBuildSummary = currentBuildSummary;
+		computePatch();
+	}
 
 	public List<ChunkMetadata> getChunksToRemove() {
 		return chunksToRemove;
@@ -127,12 +85,6 @@ public final class PatchSummary {
 
 	public int getPatchSize() {
 		return patchSize;
-	}
-
-	public PatchSummary(BuildSummary previousBuildSummary, BuildSummary currentBuildSummary) {
-		this.previousBuildSummary = previousBuildSummary;
-		this.currentBuildSummary = currentBuildSummary;
-		computePatch();
 	}
 
 	private void computePatch() {
@@ -160,5 +112,55 @@ public final class PatchSummary {
 		patchSize = chunksToAdd.stream()
 				.mapToInt(ChunkMetadata::getLength)
 				.sum();
+	}
+
+	private static class ChunkMetadata {
+		private final String hexHash;
+		private final long offset;
+		private final int length;
+
+		public ChunkMetadata(Chunk chunk) {
+			hexHash = chunk.getHexHash();
+			offset = chunk.getOffset();
+			length = chunk.getLength();
+		}
+
+		public String getHexHash() {
+			return hexHash;
+		}
+
+		public long getOffset() {
+			return offset;
+		}
+
+		public int getLength() {
+			return length;
+		}
+	}
+
+	private static class BuildSummary {
+		private final Map<String, ChunkMetadata> hashToChunk = new HashMap<>();
+
+		public BuildSummary(Iterable<ChunkMetadata> chunks) {
+			chunks.forEach(chunk -> {
+				if (hashToChunk.containsKey(chunk.hexHash)) {
+					return;
+				}
+				hashToChunk.put(chunk.hexHash, chunk);
+			});
+		}
+
+		public Stream<ChunkMetadata> getChunks() {
+			return hashToChunk.values()
+					.stream();
+		}
+
+		public boolean containsChunk(ChunkMetadata chunk) {
+			return hashToChunk.containsKey(chunk.getHexHash());
+		}
+
+		public ChunkMetadata getChunk(String hash) {
+			return hashToChunk.get(hash);
+		}
 	}
 }

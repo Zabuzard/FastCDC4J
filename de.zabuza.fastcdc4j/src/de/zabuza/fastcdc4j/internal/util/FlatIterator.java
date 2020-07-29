@@ -9,7 +9,6 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	private final Function<X, Iterator<Y>> provider;
 	private Iterator<Y> currentInnerIter;
 
-
 	public FlatIterator(Iterator<X> outerIterator, Function<X, Iterator<Y>> provider) {
 		this.outerIterator = outerIterator;
 		this.provider = provider;

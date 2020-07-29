@@ -23,7 +23,8 @@ public final class Util {
 
 	public static byte[] hash(String method, byte[] data) {
 		try {
-			return MessageDigest.getInstance(method).digest(data);
+			return MessageDigest.getInstance(method)
+					.digest(data);
 		} catch (NoSuchAlgorithmException e) {
 			throw new IllegalStateException("Hash method must be supported", e);
 		}
