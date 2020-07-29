@@ -22,7 +22,7 @@ public final class CompareFiles {
 	 */
 	public static void main(final String[] args) {
 		Path first = Path.of("C:\\Users\\dtischner\\Desktop\\common.dat");
-		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\common3.dat");
+		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\common2.dat");
 
 		Chunker chunker = new ChunkerBuilder().build();
 

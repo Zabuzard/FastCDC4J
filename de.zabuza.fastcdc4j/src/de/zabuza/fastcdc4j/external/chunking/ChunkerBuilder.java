@@ -1,13 +1,14 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
 import de.zabuza.fastcdc4j.internal.chunking.IterativeStreamChunker;
+import de.zabuza.fastcdc4j.internal.chunking.fastcdc.FastCdcChunkerCore;
 import de.zabuza.fastcdc4j.internal.chunking.fsc.FixedSizeChunkerCore;
 
 /**
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class ChunkerBuilder {
-	private ChunkerAlgorithm algorithm = ChunkerAlgorithm.FIXED_SIZE_CHUNKING; // TODO Choose appropriate algorithm
+	private ChunkerAlgorithm algorithm = ChunkerAlgorithm.FAST_CDC;
 	private Chunker chunker;
 	private IterativeStreamChunkerCore core;
 
@@ -17,7 +18,7 @@ public final class ChunkerBuilder {
 		}
 
 		IterativeStreamChunkerCore coreToUse = core != null ? core : switch (algorithm) {
-			case FAST_CDC -> null; // TODO Implement
+			case FAST_CDC -> new FastCdcChunkerCore();
 			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore();
 			default -> throw new AssertionError();
 		};
