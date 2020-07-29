@@ -21,8 +21,8 @@ public final class CompareFiles {
 	 * @param args Not supported
 	 */
 	public static void main(final String[] args) {
-		Path first = Path.of("C:\\Users\\dtischner\\Desktop\\common.dat");
-		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\common_prepend.dat");
+		Path first = Path.of("C:\\Users\\dtischner\\Desktop\\first");
+		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\second");
 
 		Chunker chunker = new ChunkerBuilder().build();
 

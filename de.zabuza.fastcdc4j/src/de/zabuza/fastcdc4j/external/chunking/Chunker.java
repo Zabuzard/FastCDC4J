@@ -1,5 +1,7 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
+import de.zabuza.fastcdc4j.internal.util.FlatIterator;
+
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,9 +13,9 @@ import java.util.stream.Stream;
 public interface Chunker {
 	Iterable<Chunk> chunk(InputStream stream, long size);
 
-	default Iterable<Chunk> chunk(Stream<Path> path) {
-		// TODO Implement
-		return null;
+	default Iterable<Chunk> chunk(Stream<Path> paths) {
+		return () -> new FlatIterator<>(paths.filter(Files::isRegularFile)
+				.iterator(), path -> chunk(path).iterator());
 	}
 
 	default Iterable<Chunk> chunk(final byte[] data) {
