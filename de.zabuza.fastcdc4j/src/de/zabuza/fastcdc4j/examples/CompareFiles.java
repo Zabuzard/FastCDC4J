@@ -21,33 +21,32 @@ public final class CompareFiles {
 	 * @param args Not supported
 	 */
 	public static void main(final String[] args) {
-		Path first = Path.of("C:\\Users\\Zabuza\\Desktop\\data1.txt");
-		Path second = Path.of("C:\\Users\\Zabuza\\Desktop\\data2.txt");
+		Path first = Path.of("C:\\Users\\dtischner\\Desktop\\common.dat");
+		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\common3.dat");
 
 		Chunker chunker = new ChunkerBuilder().build();
 
 		Iterable<Chunk> chunks1 = chunker.chunk(first);
 		Iterable<Chunk> chunks2 = chunker.chunk(second);
 
+		System.out.println("File1 stuff: ");
 		List<String> hashes1 = new ArrayList<>();
 		for (Chunk chunk : chunks1) {
 			hashes1.add(chunk.getHexHash());
+			System.out.printf("offset: %d\tlength: %d%n", chunk.getOffset(), chunk.getLength());
 		}
 		Set<String> uniqueHashes1 = new HashSet<>(hashes1);
 
+		System.out.println();
+		System.out.println("File2 stuff: ");
 		List<String> hashes2 = new ArrayList<>();
 		for (Chunk chunk : chunks2) {
 			hashes2.add(chunk.getHexHash());
+			System.out.printf("offset: %d\tlength: %d%n", chunk.getOffset(), chunk.getLength());
 		}
 		Set<String> uniqueHashes2 = new HashSet<>(hashes2);
 
-		System.out.println("File1 hashes:");
-		uniqueHashes1.forEach(System.out::println);
 		System.out.println();
-		System.out.println("File2 hashes:");
-		uniqueHashes2.forEach(System.out::println);
-		System.out.println();
-
 		System.out.printf("File 1 chunks: %d total, %d unique, %d duplicate%n", hashes1.size(), uniqueHashes1.size(),
 				hashes1.size() - uniqueHashes1.size());
 		System.out.printf("File 2 chunks: %d total, %d unique, %d duplicate%n", hashes2.size(), uniqueHashes2.size(),

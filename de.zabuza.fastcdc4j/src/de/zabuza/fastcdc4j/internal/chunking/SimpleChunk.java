@@ -10,11 +10,13 @@ public final class SimpleChunk implements Chunk {
 	private final byte[] data;
 	private final long offset;
 	private final byte[] hash;
+	private final String hexHash;
 
 	public SimpleChunk(final byte[] data, final long offset, final byte[] hash) {
 		this.data = data;
 		this.offset = offset;
 		this.hash = hash;
+		hexHash = Util.bytesToHex(hash);
 	}
 
 	@Override
@@ -39,6 +41,6 @@ public final class SimpleChunk implements Chunk {
 
 	@Override
 	public String getHexHash() {
-		return Util.bytesToHex(hash);
+		return hexHash;
 	}
 }
