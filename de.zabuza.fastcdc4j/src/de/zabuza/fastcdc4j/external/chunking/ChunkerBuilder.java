@@ -11,7 +11,7 @@ public final class ChunkerBuilder {
 	private IterativeStreamChunkerCore core;
 	private String hashMethod = "SHA-1";
 	private int expectedChunkSize = 8 * 1_024;
-	private HashTableOption hashTableOption = HashTableOption.BUZ_HASH;
+	private HashTableOption hashTableOption = HashTableOption.RTPAL;
 	private long[] hashTable;
 
 	public Chunker build() {
@@ -20,7 +20,7 @@ public final class ChunkerBuilder {
 		}
 
 		long[] hashTableToUse = hashTable != null ? hashTable : switch (hashTableOption) {
-			case BUZ_HASH -> HashTables.getBuzHash();
+			case RTPAL -> HashTables.getRtpal();
 			case NLFIEDLER_RUST -> HashTables.getNlfiedlerRust();
 		};
 

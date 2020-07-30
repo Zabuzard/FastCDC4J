@@ -4,7 +4,7 @@ package de.zabuza.fastcdc4j.internal.chunking;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class HashTables {
-	private static final long[] BUZ_HASH =
+	private static final long[] RTPAL =
 			{0x5a16b18f2aac863eL, 0x05fad735784f09eaL, 0x355c6a3868fe64afL, 0x57df89c95716c702L, 0x46ea7572135544a6L,
 					0x6291d5376cd79d73L, 0x2a6e072b609b0bbfL, 0x110f7f895ec438b7L, 0x2fc580f60659f690L,
 					0x15ce33c924a8880bL, 0x1f3fabc44c091f5fL, 0x76e7512d0f53c142L, 0x30ff6d65448b44b3L,
@@ -108,8 +108,8 @@ public final class HashTables {
 					0x0dc82c11L, 0x23ffe354L, 0x2eac53a6L, 0x16139e09L, 0x0afd0dbcL, 0x2a4d4237L, 0x56a368c7L,
 					0x234325e4L, 0x2dce9187L, 0x32e8ea7eL};
 
-	public static long[] getBuzHash() {
-		return BUZ_HASH;
+	public static long[] getRtpal() {
+		return RTPAL;
 	}
 
 	public static long[] getNlfiedlerRust() {
