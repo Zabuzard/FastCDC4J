@@ -57,25 +57,25 @@ public final class PatchSummary {
 
 		PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
 		System.out.println("==== " + description);
-		System.out.printf("%-25s %10d total size, %10d total chunks, %10d unique size, %10d unique chunks%n",
+		System.out.printf("%-25s %12d total size, %12d total chunks, %12d unique size, %12d unique chunks%n",
 				"Build summary previous:", previousBuildSummary.getTotalSize(),
 				previousBuildSummary.getTotalChunksCount(), previousBuildSummary.getTotalUniqueSize(),
 				previousBuildSummary.getUniqueChunksCount());
-		System.out.printf("%-25s %10d total size, %10d total chunks, %10d unique size, %10d unique chunks%n",
+		System.out.printf("%-25s %12d total size, %12d total chunks, %12d unique size, %12d unique chunks%n",
 				"Build summary current:", currentBuildSummary.getTotalSize(), currentBuildSummary.getTotalChunksCount(),
 				currentBuildSummary.getTotalUniqueSize(), currentBuildSummary.getUniqueChunksCount());
-		System.out.printf("%-25s %10d average chunk size, %10.2f%% deduplication ratio%n", "Build metrics previous:",
+		System.out.printf("%-25s %12d average chunk size, %12.2f%% deduplication ratio%n", "Build metrics previous:",
 				previousBuildSummary.getAverageChunkSize(), previousBuildSummary.getDeduplicationRatio());
-		System.out.printf("%-25s %10d average chunk size, %10.2f%% deduplication ratio%n", "Build metrics current:",
+		System.out.printf("%-25s %12d average chunk size, %12.2f%% deduplication ratio%n", "Build metrics current:",
 				currentBuildSummary.getAverageChunkSize(), currentBuildSummary.getDeduplicationRatio());
-		System.out.printf("%-25s %10d%n", "Patch size:", summary.getPatchSize());
-		System.out.printf("%-25s %10d%n", "Chunks to add:", summary.getChunksToAdd()
+		System.out.printf("%-25s %12d%n", "Patch size:", summary.getPatchSize());
+		System.out.printf("%-25s %12d%n", "Chunks to add:", summary.getChunksToAdd()
 				.size());
-		System.out.printf("%-25s %10d%n", "Chunks to remove:", summary.getChunksToRemove()
+		System.out.printf("%-25s %12d%n", "Chunks to remove:", summary.getChunksToRemove()
 				.size());
-		System.out.printf("%-25s %10d%n", "Chunks to move:", summary.getChunksToMove()
+		System.out.printf("%-25s %12d%n", "Chunks to move:", summary.getChunksToMove()
 				.size());
-		System.out.printf("%-25s %10d%n", "Untouched chunks:", summary.getUntouchedChunks()
+		System.out.printf("%-25s %12d%n", "Untouched chunks:", summary.getUntouchedChunks()
 				.size());
 		System.out.println();
 	}
