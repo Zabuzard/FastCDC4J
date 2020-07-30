@@ -57,14 +57,25 @@ public final class PatchSummary {
 
 		PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
 		System.out.println("==== " + description);
-		System.out.printf("%-20s %10d%n", "Patch size (byte):", summary.getPatchSize());
-		System.out.printf("%-20s %10d%n", "Chunks to add:", summary.getChunksToAdd()
+		System.out.printf("%-25s %10d total size, %10d total chunks, %10d unique size, %10d unique chunks%n",
+				"Build summary previous:", previousBuildSummary.getTotalSize(),
+				previousBuildSummary.getTotalChunksCount(), previousBuildSummary.getTotalUniqueSize(),
+				previousBuildSummary.getUniqueChunksCount());
+		System.out.printf("%-25s %10d total size, %10d total chunks, %10d unique size, %10d unique chunks%n",
+				"Build summary current:", currentBuildSummary.getTotalSize(), currentBuildSummary.getTotalChunksCount(),
+				currentBuildSummary.getTotalUniqueSize(), currentBuildSummary.getUniqueChunksCount());
+		System.out.printf("%-25s %10d average chunk size, %10.2f%% deduplication ratio%n", "Build metrics previous:",
+				previousBuildSummary.getAverageChunkSize(), previousBuildSummary.getDeduplicationRatio());
+		System.out.printf("%-25s %10d average chunk size, %10.2f%% deduplication ratio%n", "Build metrics current:",
+				currentBuildSummary.getAverageChunkSize(), currentBuildSummary.getDeduplicationRatio());
+		System.out.printf("%-25s %10d%n", "Patch size:", summary.getPatchSize());
+		System.out.printf("%-25s %10d%n", "Chunks to add:", summary.getChunksToAdd()
 				.size());
-		System.out.printf("%-20s %10d%n", "Chunks to remove:", summary.getChunksToRemove()
+		System.out.printf("%-25s %10d%n", "Chunks to remove:", summary.getChunksToRemove()
 				.size());
-		System.out.printf("%-20s %10d%n", "Chunks to move:", summary.getChunksToMove()
+		System.out.printf("%-25s %10d%n", "Chunks to move:", summary.getChunksToMove()
 				.size());
-		System.out.printf("%-20s %10d%n", "Untouched chunks:", summary.getUntouchedChunks()
+		System.out.printf("%-25s %10d%n", "Untouched chunks:", summary.getUntouchedChunks()
 				.size());
 		System.out.println();
 	}
@@ -75,7 +86,7 @@ public final class PatchSummary {
 	private final BuildSummary currentBuildSummary;
 	private final BuildSummary previousBuildSummary;
 	private final List<ChunkMetadata> untouchedChunks = new ArrayList<>();
-	private int patchSize;
+	private long patchSize;
 
 	public PatchSummary(BuildSummary previousBuildSummary, BuildSummary currentBuildSummary) {
 		this.previousBuildSummary = previousBuildSummary;
@@ -95,7 +106,7 @@ public final class PatchSummary {
 		return chunksToRemove;
 	}
 
-	public int getPatchSize() {
+	public long getPatchSize() {
 		return patchSize;
 	}
 
@@ -126,24 +137,37 @@ public final class PatchSummary {
 				.forEach(untouchedChunks::add);
 
 		patchSize = chunksToAdd.stream()
-				.mapToInt(ChunkMetadata::getLength)
+				.mapToLong(ChunkMetadata::getLength)
 				.sum();
 	}
 
 	private static class BuildSummary {
 		private final Map<String, ChunkMetadata> hashToChunk = new HashMap<>();
+		private int totalChunksCount = 0;
+		private long totalSize = 0;
+		private long totalUniqueSize = 0;
+		private int uniqueChunksCount = 0;
 
 		public BuildSummary(Iterable<ChunkMetadata> chunks) {
 			chunks.forEach(chunk -> {
+				totalChunksCount++;
+				totalSize += chunk.getLength();
+
 				if (hashToChunk.containsKey(chunk.hexHash)) {
 					return;
 				}
 				hashToChunk.put(chunk.hexHash, chunk);
+				uniqueChunksCount++;
+				totalUniqueSize += chunk.getLength();
 			});
 		}
 
 		public boolean containsChunk(ChunkMetadata chunk) {
 			return hashToChunk.containsKey(chunk.getHexHash());
+		}
+
+		public int getAverageChunkSize() {
+			return (int) (totalSize / totalChunksCount);
 		}
 
 		public ChunkMetadata getChunk(String hash) {
@@ -153,6 +177,26 @@ public final class PatchSummary {
 		public Stream<ChunkMetadata> getChunks() {
 			return hashToChunk.values()
 					.stream();
+		}
+
+		public double getDeduplicationRatio() {
+			return (double) totalUniqueSize / totalSize * 100;
+		}
+
+		public int getTotalChunksCount() {
+			return totalChunksCount;
+		}
+
+		public long getTotalSize() {
+			return totalSize;
+		}
+
+		public long getTotalUniqueSize() {
+			return totalUniqueSize;
+		}
+
+		public int getUniqueChunksCount() {
+			return uniqueChunksCount;
 		}
 	}
 
