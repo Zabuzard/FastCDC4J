@@ -9,9 +9,9 @@ import java.io.UncheckedIOException;
 
 public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCore {
 	private static final long MASK_L = 0b1111_1111_1111L;
-			// TODO Make dependent on given expected size
+	// TODO Make dependent on given expected size
 	private static final long MASK_S = 0b11_1111_1111_1111L;
-			// TODO Make dependent on given expected size
+	// TODO Make dependent on given expected size
 	private static final int MAX_SIZE = 64 * 1024; // TODO Make dependent on given expected size
 	private static final int MIN_SIZE = 2 * 1024; // TODO Make dependent on given expected size
 

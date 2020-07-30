@@ -17,7 +17,7 @@ public final class PatchSummary {
 	/**
 	 * Starts the application.
 	 *
-	 * @param args Not supported
+	 * @param args Two arguments, the path to the previous build and the path to the current build to compare.
 	 */
 	public static void main(final String[] args) {
 		if (args.length != 2) {

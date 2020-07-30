@@ -17,11 +17,15 @@ public final class CompareFiles {
 	/**
 	 * Starts the application.
 	 *
-	 * @param args Not supported
+	 * @param args Two arguments, the path to the first file and the path to the second file to compare.
 	 */
 	public static void main(final String[] args) {
-		Path first = Path.of("C:\\Users\\dtischner\\Desktop\\first");
-		Path second = Path.of("C:\\Users\\dtischner\\Desktop\\second");
+		if (args.length != 2) {
+			throw new IllegalArgumentException(
+					"Expected two arguments first and second, where first denotes the path to the first file and second the path to the second file to compare.");
+		}
+		Path first = Path.of(args[0]);
+		Path second = Path.of(args[1]);
 
 		Chunker chunker = new ChunkerBuilder().build();
 

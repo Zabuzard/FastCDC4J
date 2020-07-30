@@ -9,9 +9,9 @@ import java.io.UncheckedIOException;
 
 public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	private static final long MASK_L = 0b1101_10010_00000_00000_00011_0101_0011_0000_0000_0000_0000L;
-			// TODO Make dependent on given expected size
+	// TODO Make dependent on given expected size
 	private static final long MASK_S = 0b11_0101_1001_0000_0111_0000_0011_0101_0011_0000_0000_0000_0000L;
-			// TODO Make dependent on given expected size
+	// TODO Make dependent on given expected size
 	private static final int MAX_SIZE = 64 * 1_024; // TODO Make dependent on given expected size
 	private static final int MIN_SIZE = 2 * 1_024; // TODO Make dependent on given expected size
 
