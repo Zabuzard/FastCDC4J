@@ -1,4 +1,4 @@
-package de.zabuza.fastcdc4j.internal.chunking.fsc;
+package de.zabuza.fastcdc4j.internal.chunking;
 
 import de.zabuza.fastcdc4j.external.chunking.IterativeStreamChunkerCore;
 

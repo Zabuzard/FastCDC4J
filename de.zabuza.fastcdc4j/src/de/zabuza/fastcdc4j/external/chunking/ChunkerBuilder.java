@@ -1,9 +1,6 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
-import de.zabuza.fastcdc4j.internal.chunking.HashTables;
-import de.zabuza.fastcdc4j.internal.chunking.IterativeStreamChunker;
-import de.zabuza.fastcdc4j.internal.chunking.fastcdc.FastCdcChunkerCore;
-import de.zabuza.fastcdc4j.internal.chunking.fsc.FixedSizeChunkerCore;
+import de.zabuza.fastcdc4j.internal.chunking.*;
 
 /**
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -23,11 +20,13 @@ public final class ChunkerBuilder {
 		}
 
 		long[] hashTableToUse = hashTable != null ? hashTable : switch (hashTableOption) {
-			case BUZ_HASH -> HashTables.getBuzHashTable();
+			case BUZ_HASH -> HashTables.getBuzHash();
+			case NLFIEDLER_RUST -> HashTables.getNlfiedlerRust();
 		};
 
 		IterativeStreamChunkerCore coreToUse = core != null ? core : switch (chunkerOption) {
 			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, hashTableToUse);
+			case NLFIEDLER_RUST -> new NlfiedlerRustChunkerCore(expectedChunkSize, hashTableToUse);
 			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore(expectedChunkSize);
 		};
 		return new IterativeStreamChunker(coreToUse, hashMethod);

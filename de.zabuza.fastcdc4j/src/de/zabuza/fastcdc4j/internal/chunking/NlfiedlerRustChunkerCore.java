@@ -1,4 +1,4 @@
-package de.zabuza.fastcdc4j.internal.chunking.fastcdc;
+package de.zabuza.fastcdc4j.internal.chunking;
 
 import de.zabuza.fastcdc4j.external.chunking.IterativeStreamChunkerCore;
 
@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
-public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
-	private static final long MASK_L = 0b110110010000000000000011010100110000000000000000L;
+public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCore {
+	private static final long MASK_L = 0b1111_1111_1111L;
 			// TODO Make dependent on given expected size
-	private static final long MASK_S = 0b11010110010000011100000011010100110000000000000000L;
+	private static final long MASK_S = 0b11_1111_1111_1111L;
 			// TODO Make dependent on given expected size
 	private static final int MAX_SIZE = 64 * 1024; // TODO Make dependent on given expected size
 	private static final int MIN_SIZE = 2 * 1024; // TODO Make dependent on given expected size
@@ -18,7 +18,7 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	private final int expectedSize;
 	private final long[] gear;
 
-	public FastCdcChunkerCore(int expectedSize, long[] gear) {
+	public NlfiedlerRustChunkerCore(int expectedSize, long[] gear) {
 		this.expectedSize = expectedSize;
 		this.gear = gear;
 	}
@@ -51,7 +51,7 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 					throw new IllegalStateException();
 				}
 				dataBuffer.write(data);
-				fingerprint = (fingerprint << 1) + gear[data];
+				fingerprint = (fingerprint >> 1) + gear[data];
 				if ((fingerprint & MASK_S) == 0) {
 					return dataBuffer.toByteArray();
 				}
@@ -62,7 +62,7 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 					throw new IllegalStateException();
 				}
 				dataBuffer.write(data);
-				fingerprint = (fingerprint << 1) + gear[data];
+				fingerprint = (fingerprint >> 1) + gear[data];
 				if ((fingerprint & MASK_L) == 0) {
 					return dataBuffer.toByteArray();
 				}

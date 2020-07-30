@@ -1,8 +1,6 @@
 package de.zabuza.fastcdc4j.examples;
 
-import de.zabuza.fastcdc4j.external.chunking.Chunk;
-import de.zabuza.fastcdc4j.external.chunking.Chunker;
-import de.zabuza.fastcdc4j.external.chunking.ChunkerBuilder;
+import de.zabuza.fastcdc4j.external.chunking.*;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,7 +28,8 @@ public final class PatchSummary {
 		Path currentBuild = Path.of(args[1]);
 
 		// Analyze builds
-		Chunker chunker = new ChunkerBuilder().build();
+		Chunker chunker = new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST).setHashTableOption(
+				HashTableOption.NLFIEDLER_RUST).build();
 		List<ChunkMetadata> previousChunks = new ArrayList<>();
 		chunker.chunk(previousBuild)
 				.forEach(chunk -> previousChunks.add(new ChunkMetadata(chunk)));
@@ -95,7 +94,7 @@ public final class PatchSummary {
 		// Chunks to add
 		currentBuildSummary.getChunks()
 				.filter(Predicate.not(previousBuildSummary::containsChunk))
-				.forEach(chunksToRemove::add);
+				.forEach(chunksToAdd::add);
 		// Chunks to move
 		currentBuildSummary.getChunks()
 				.filter(previousBuildSummary::containsChunk)
