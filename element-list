@@ -1,0 +1,4 @@
+module:de.zabuza.fastcdc4j
+de.zabuza.fastcdc4j.external.chunking
+de.zabuza.fastcdc4j.internal.chunking
+de.zabuza.fastcdc4j.internal.util
