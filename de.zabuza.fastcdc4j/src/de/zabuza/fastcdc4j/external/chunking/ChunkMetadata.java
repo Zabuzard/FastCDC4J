@@ -1,23 +1,13 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
-import de.zabuza.fastcdc4j.internal.chunking.SimpleChunkMetadata;
-
 /**
- * Interface representing chunked data as created by a {@link Chunker}.
+ * Interface representing metadata of a chunk as created by a {@link Chunker}.
  * <p>
- * Chunks own their data, hence it is preferable to keep their lifetime short and collect necessary information as soon
- * as possible.
+ * Unlike a {@link Chunk}, metadata does not own their data.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public interface Chunk {
-	/**
-	 * Gets the data contained in this chunk.
-	 *
-	 * @return The contained data
-	 */
-	byte[] getData();
-
+public interface ChunkMetadata {
 	/**
 	 * Gets the offset of this chunk, with respect to its source data stream.
 	 *
@@ -47,8 +37,4 @@ public interface Chunk {
 	 * @return A hexadecimal hash representation
 	 */
 	String getHexHash();
-
-	default ChunkMetadata toChunkMetadata() {
-		return new SimpleChunkMetadata(getOffset(), getLength(), getHash(), getHexHash());
-	}
 }

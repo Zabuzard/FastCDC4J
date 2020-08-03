@@ -49,12 +49,12 @@ final class PatchSummary {
 			final Path currentBuild) {
 		final List<ChunkMetadata> previousChunks = new ArrayList<>();
 		chunker.chunk(previousBuild)
-				.forEach(chunk -> previousChunks.add(new ChunkMetadata(chunk)));
+				.forEach(chunk -> previousChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
 
 		final List<ChunkMetadata> currentChunks = new ArrayList<>();
 		chunker.chunk(currentBuild)
-				.forEach(chunk -> currentChunks.add(new ChunkMetadata(chunk)));
+				.forEach(chunk -> currentChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
 		final PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
@@ -128,14 +128,14 @@ final class PatchSummary {
 		// Chunks to move
 		currentBuildSummary.getChunks()
 				.filter(previousBuildSummary::containsChunk)
-				.filter(currentChunk -> previousBuildSummary.getChunk(currentChunk.hexHash).offset
-						!= currentChunk.offset)
+				.filter(currentChunk -> previousBuildSummary.getChunk(currentChunk.getHexHash())
+						.getOffset() != currentChunk.getOffset())
 				.forEach(chunksToMove::add);
 		// Untouched chunks
 		currentBuildSummary.getChunks()
 				.filter(previousBuildSummary::containsChunk)
-				.filter(currentChunk -> previousBuildSummary.getChunk(currentChunk.hexHash).offset
-						== currentChunk.offset)
+				.filter(currentChunk -> previousBuildSummary.getChunk(currentChunk.getHexHash())
+						.getOffset() == currentChunk.getOffset())
 				.forEach(untouchedChunks::add);
 
 		patchSize = chunksToAdd.stream()
@@ -150,15 +150,15 @@ final class PatchSummary {
 		private long totalUniqueSize;
 		private int uniqueChunksCount;
 
-		private BuildSummary(final Iterable<ChunkMetadata> chunks) {
+		private BuildSummary(final Iterable<? extends ChunkMetadata> chunks) {
 			chunks.forEach(chunk -> {
 				totalChunksCount++;
 				totalSize += chunk.getLength();
 
-				if (hashToChunk.containsKey(chunk.hexHash)) {
+				if (hashToChunk.containsKey(chunk.getHexHash())) {
 					return;
 				}
-				hashToChunk.put(chunk.hexHash, chunk);
+				hashToChunk.put(chunk.getHexHash(), chunk);
 				uniqueChunksCount++;
 				totalUniqueSize += chunk.getLength();
 			});
@@ -200,30 +200,6 @@ final class PatchSummary {
 
 		int getUniqueChunksCount() {
 			return uniqueChunksCount;
-		}
-	}
-
-	private static final class ChunkMetadata {
-		private final String hexHash;
-		private final int length;
-		private final long offset;
-
-		private ChunkMetadata(final Chunk chunk) {
-			hexHash = chunk.getHexHash();
-			offset = chunk.getOffset();
-			length = chunk.getLength();
-		}
-
-		public long getOffset() {
-			return offset;
-		}
-
-		String getHexHash() {
-			return hexHash;
-		}
-
-		int getLength() {
-			return length;
 		}
 	}
 }
