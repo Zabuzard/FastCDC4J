@@ -48,6 +48,11 @@ public interface Chunk {
 	 */
 	String getHexHash();
 
+	/**
+	 * Converts this chunk to its corresponding metadata
+	 *
+	 * @return The metadata
+	 */
 	default ChunkMetadata toChunkMetadata() {
 		return new SimpleChunkMetadata(getOffset(), getLength(), getHash(), getHexHash());
 	}
