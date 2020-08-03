@@ -32,14 +32,14 @@ public final class IterativeStreamChunker implements Chunker {
 	 * @param hashMethod The hash method to use for hashing the data of a chunk, has to be supported and accepted by
 	 *                   {@link java.security.MessageDigest}
 	 */
-	public IterativeStreamChunker(IterativeStreamChunkerCore core, String hashMethod) {
+	public IterativeStreamChunker(final IterativeStreamChunkerCore core, final String hashMethod) {
 		this.core = core;
 		this.hashMethod = hashMethod;
 	}
 
 	@Override
-	public Iterable<Chunk> chunk(final InputStream stream, long size) {
-		return () -> new ChunkerIterator(stream, size);
+	public Iterable<Chunk> chunk(final InputStream stream, final long size) {
+		return () -> new ChunkerIterator(stream, size, core, hashMethod);
 	}
 
 	/**
@@ -47,7 +47,7 @@ public final class IterativeStreamChunker implements Chunker {
 	 *
 	 * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
 	 */
-	private class ChunkerIterator implements Iterator<Chunk> {
+	private static final class ChunkerIterator implements Iterator<Chunk> {
 		/**
 		 * The amount of bytes available in the stream that are subject to be chunked.
 		 */
@@ -57,18 +57,32 @@ public final class IterativeStreamChunker implements Chunker {
 		 */
 		private final InputStream stream;
 		/**
+		 * The core to use for chunking.
+		 */
+		private final IterativeStreamChunkerCore core;
+		/**
+		 * The method to use for hashing the data of a chunk.
+		 */
+		private final String hashMethod;
+		/**
 		 * The current offset in the data stream, marking the beginning of the next chunk.
 		 */
 		private long currentOffset;
 
 		/**
-		 * @param stream The data stream to chunk
-		 * @param size   The amount of bytes available in the stream that are subject to be chunked, the stream must
-		 *               offer at least that many bytes
+		 * @param stream     The data stream to chunk
+		 * @param size       The amount of bytes available in the stream that are subject to be chunked, the stream must
+		 *                   offer at least that many bytes
+		 * @param core       The core to use for chunking.
+		 * @param hashMethod The hash method to use for hashing the data of a chunk, has to be supported and accepted by
+		 *                   {@link java.security.MessageDigest}
 		 */
-		public ChunkerIterator(InputStream stream, long size) {
+		private ChunkerIterator(final InputStream stream, final long size, final IterativeStreamChunkerCore core,
+				final String hashMethod) {
 			this.stream = stream;
 			this.size = size;
+			this.core = core;
+			this.hashMethod = hashMethod;
 		}
 
 		@Override
@@ -82,9 +96,9 @@ public final class IterativeStreamChunker implements Chunker {
 				throw new NoSuchElementException("The data stream has ended, can not generate another chunk");
 			}
 
-			byte[] data = core.readNextChunk(stream, size, currentOffset);
+			final byte[] data = core.readNextChunk(stream, size, currentOffset);
 
-			Chunk chunk = new SimpleChunk(data, currentOffset, Util.hash(hashMethod, data));
+			final Chunk chunk = new SimpleChunk(data, currentOffset, Util.hash(hashMethod, data));
 
 			currentOffset += data.length;
 			return chunk;

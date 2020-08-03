@@ -14,6 +14,7 @@ import java.util.stream.Stream;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
+@SuppressWarnings("InterfaceMayBeAnnotatedFunctional")
 public interface Chunker {
 	/**
 	 * Chunks the given stream into chunks. The stream is consumed and populates the resulting iterable lazily as it is
@@ -41,7 +42,7 @@ public interface Chunker {
 	 *
 	 * @return The chunks of the stream, lazily populated
 	 */
-	default Iterable<Chunk> chunk(Stream<Path> paths) {
+	default Iterable<Chunk> chunk(final Stream<? extends Path> paths) {
 		return () -> new FlatIterator<>(paths.filter(Files::isRegularFile)
 				.iterator(), path -> chunk(path).iterator());
 	}
@@ -80,7 +81,7 @@ public interface Chunker {
 			if (Files.isRegularFile(path)) {
 				return chunk(new BufferedInputStream(Files.newInputStream(path)), Files.size(path));
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 		throw new IllegalArgumentException("Only existing regular files or directories are supported");

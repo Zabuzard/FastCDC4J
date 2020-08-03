@@ -3,20 +3,18 @@ package de.zabuza.fastcdc4j.examples;
 import de.zabuza.fastcdc4j.external.chunking.*;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
- * Class oferring a {@link #main(String[])} method that compares two given paths with each other and prints statistics
+ * Class offering a {@link #main(String[])} method that compares two given paths with each other and prints statistics
  * for patching one file to the other using chunks.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class PatchSummary {
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
+final class PatchSummary {
 	/**
 	 * Starts the application.
 	 *
@@ -27,10 +25,10 @@ public final class PatchSummary {
 			throw new IllegalArgumentException(
 					"Expected two arguments path1 and path2, where path1 denotes the path to the previous version and path2 the path to the current version.");
 		}
-		Path previousBuild = Path.of(args[0]);
-		Path currentBuild = Path.of(args[1]);
+		final Path previousBuild = Path.of(args[0]);
+		final Path currentBuild = Path.of(args[1]);
 
-		Map<String, Chunker> descriptionToChunker = new HashMap<>();
+		final Map<String, Chunker> descriptionToChunker = new HashMap<>();
 		descriptionToChunker.put("FSC 8KB", new ChunkerBuilder().setChunkerOption(ChunkerOption.FIXED_SIZE_CHUNKING)
 				.build());
 		descriptionToChunker.put("FastCDC 8KB RTPal", new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
@@ -43,22 +41,23 @@ public final class PatchSummary {
 		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild, currentBuild);
 		System.out.println();
 		descriptionToChunker.forEach(
-				(description, chunker) -> executePatchSummary(description, chunker, previousBuild, currentBuild));
+				(description, chunker) -> PatchSummary.executePatchSummary(description, chunker, previousBuild,
+						currentBuild));
 	}
 
-	private static void executePatchSummary(String description, Chunker chunker, Path previousBuild,
-			Path currentBuild) {
-		List<ChunkMetadata> previousChunks = new ArrayList<>();
+	private static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
+			final Path currentBuild) {
+		final List<ChunkMetadata> previousChunks = new ArrayList<>();
 		chunker.chunk(previousBuild)
 				.forEach(chunk -> previousChunks.add(new ChunkMetadata(chunk)));
-		BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
+		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
 
-		List<ChunkMetadata> currentChunks = new ArrayList<>();
+		final List<ChunkMetadata> currentChunks = new ArrayList<>();
 		chunker.chunk(currentBuild)
 				.forEach(chunk -> currentChunks.add(new ChunkMetadata(chunk)));
-		BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
+		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
-		PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
+		final PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
 		System.out.println("==== " + description);
 		System.out.printf("%-25s %12d total size, %12d total chunks, %12d unique size, %12d unique chunks%n",
 				"Build summary previous:", previousBuildSummary.getTotalSize(),
@@ -91,30 +90,30 @@ public final class PatchSummary {
 	private final List<ChunkMetadata> untouchedChunks = new ArrayList<>();
 	private long patchSize;
 
-	public PatchSummary(BuildSummary previousBuildSummary, BuildSummary currentBuildSummary) {
+	private PatchSummary(final BuildSummary previousBuildSummary, final BuildSummary currentBuildSummary) {
 		this.previousBuildSummary = previousBuildSummary;
 		this.currentBuildSummary = currentBuildSummary;
 		computePatch();
 	}
 
-	public List<ChunkMetadata> getChunksToAdd() {
-		return chunksToAdd;
+	private List<ChunkMetadata> getChunksToAdd() {
+		return Collections.unmodifiableList(chunksToAdd);
 	}
 
-	public List<ChunkMetadata> getChunksToMove() {
-		return chunksToMove;
+	private List<ChunkMetadata> getChunksToMove() {
+		return Collections.unmodifiableList(chunksToMove);
 	}
 
-	public List<ChunkMetadata> getChunksToRemove() {
-		return chunksToRemove;
+	private List<ChunkMetadata> getChunksToRemove() {
+		return Collections.unmodifiableList(chunksToRemove);
 	}
 
-	public long getPatchSize() {
+	private long getPatchSize() {
 		return patchSize;
 	}
 
-	public List<ChunkMetadata> getUntouchedChunks() {
-		return untouchedChunks;
+	private List<ChunkMetadata> getUntouchedChunks() {
+		return Collections.unmodifiableList(untouchedChunks);
 	}
 
 	private void computePatch() {
@@ -144,14 +143,14 @@ public final class PatchSummary {
 				.sum();
 	}
 
-	private static class BuildSummary {
+	private static final class BuildSummary {
 		private final Map<String, ChunkMetadata> hashToChunk = new HashMap<>();
-		private int totalChunksCount = 0;
-		private long totalSize = 0;
-		private long totalUniqueSize = 0;
-		private int uniqueChunksCount = 0;
+		private int totalChunksCount;
+		private long totalSize;
+		private long totalUniqueSize;
+		private int uniqueChunksCount;
 
-		public BuildSummary(Iterable<ChunkMetadata> chunks) {
+		private BuildSummary(final Iterable<ChunkMetadata> chunks) {
 			chunks.forEach(chunk -> {
 				totalChunksCount++;
 				totalSize += chunk.getLength();
@@ -165,65 +164,66 @@ public final class PatchSummary {
 			});
 		}
 
-		public boolean containsChunk(ChunkMetadata chunk) {
+		boolean containsChunk(final ChunkMetadata chunk) {
 			return hashToChunk.containsKey(chunk.getHexHash());
 		}
 
-		public int getAverageChunkSize() {
+		int getAverageChunkSize() {
+			//noinspection NumericCastThatLosesPrecision
 			return (int) (totalSize / totalChunksCount);
 		}
 
-		public ChunkMetadata getChunk(String hash) {
+		ChunkMetadata getChunk(final String hash) {
 			return hashToChunk.get(hash);
 		}
 
-		public Stream<ChunkMetadata> getChunks() {
+		Stream<ChunkMetadata> getChunks() {
 			return hashToChunk.values()
 					.stream();
 		}
 
-		public double getDeduplicationRatio() {
+		double getDeduplicationRatio() {
 			return (double) totalUniqueSize / totalSize * 100;
 		}
 
-		public int getTotalChunksCount() {
+		int getTotalChunksCount() {
 			return totalChunksCount;
 		}
 
-		public long getTotalSize() {
+		long getTotalSize() {
 			return totalSize;
 		}
 
-		public long getTotalUniqueSize() {
+		long getTotalUniqueSize() {
 			return totalUniqueSize;
 		}
 
-		public int getUniqueChunksCount() {
+		int getUniqueChunksCount() {
 			return uniqueChunksCount;
 		}
 	}
 
-	private static class ChunkMetadata {
+	private static final class ChunkMetadata {
 		private final String hexHash;
 		private final int length;
 		private final long offset;
 
-		public ChunkMetadata(Chunk chunk) {
+		private ChunkMetadata(final Chunk chunk) {
 			hexHash = chunk.getHexHash();
 			offset = chunk.getOffset();
 			length = chunk.getLength();
 		}
 
-		public String getHexHash() {
+		public long getOffset() {
+			return offset;
+		}
+
+		String getHexHash() {
 			return hexHash;
 		}
 
-		public int getLength() {
+		int getLength() {
 			return length;
-		}
-
-		public long getOffset() {
-			return offset;
 		}
 	}
 }

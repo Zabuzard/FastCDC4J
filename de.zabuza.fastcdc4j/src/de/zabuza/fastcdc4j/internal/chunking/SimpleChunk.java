@@ -41,14 +41,17 @@ public final class SimpleChunk implements Chunk {
 	 *               construction by the {@link de.zabuza.fastcdc4j.external.chunking.Chunker}.
 	 */
 	public SimpleChunk(final byte[] data, final long offset, final byte[] hash) {
+		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		this.data = data;
 		this.offset = offset;
+		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		this.hash = hash;
 		hexHash = Util.bytesToHex(hash);
 	}
 
 	@Override
 	public byte[] getData() {
+		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		return data;
 	}
 
@@ -64,6 +67,7 @@ public final class SimpleChunk implements Chunk {
 
 	@Override
 	public byte[] getHash() {
+		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		return hash;
 	}
 

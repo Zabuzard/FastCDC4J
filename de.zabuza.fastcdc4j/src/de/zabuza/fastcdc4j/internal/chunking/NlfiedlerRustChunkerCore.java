@@ -16,21 +16,23 @@ import java.io.UncheckedIOException;
 public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCore {
 	// TODO Make dependent on given expected size
 	/**
-	 * Mask for the fingerprint that is used for bigger windows, to increase the likelyhood of a split.
+	 * Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
 	 */
 	private static final long MASK_L = 0b1111_1111_1111L;
 	// TODO Make dependent on given expected size
 	/**
-	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelyhood of a split.
+	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
 	 */
 	private static final long MASK_S = 0b11_1111_1111_1111L;
 	/**
 	 * Maximal size for a single chunk, in bytes.
 	 */
+	@SuppressWarnings("MultiplyOrDivideByPowerOfTwo")
 	private static final int MAX_SIZE = 64 * 1024; // TODO Make dependent on given expected size
 	/**
 	 * Minimal size for a single chunk, in bytes.
 	 */
+	@SuppressWarnings("MultiplyOrDivideByPowerOfTwo")
 	private static final int MIN_SIZE = 2 * 1024; // TODO Make dependent on given expected size
 
 	/**
@@ -50,58 +52,63 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	 * @param gear         The hash table, also known as {@code gear} used as noise to improve the splitting behavior
 	 *                     for relatively similar content
 	 */
-	public NlfiedlerRustChunkerCore(int expectedSize, long[] gear) {
+	public NlfiedlerRustChunkerCore(final int expectedSize, final long[] gear) {
 		this.expectedSize = expectedSize;
-		this.gear = gear;
+		this.gear = gear.clone();
 	}
 
 	@Override
 	public byte[] readNextChunk(final InputStream stream, final long size, final long currentOffset) {
-		try {
+		try (final ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream()) {
 			int normalSize = expectedSize;
+			//noinspection StandardVariableNames
 			long n = size - currentOffset;
 			if (n <= 0) {
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException(
+						"Attempting to read the next chunk but out of available bytes, as indicated by size");
 			}
-			if (n <= MIN_SIZE) {
+			if (n <= NlfiedlerRustChunkerCore.MIN_SIZE) {
 				return stream.readNBytes((int) n);
 			}
-			if (n >= MAX_SIZE) {
-				n = MAX_SIZE;
+			if (n >= NlfiedlerRustChunkerCore.MAX_SIZE) {
+				n = NlfiedlerRustChunkerCore.MAX_SIZE;
 			} else if (n <= normalSize) {
 				normalSize = (int) n;
 			}
 
-			ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
 			long fingerprint = 0;
-			int i = MIN_SIZE;
+			int i = NlfiedlerRustChunkerCore.MIN_SIZE;
 			dataBuffer.write(stream.readNBytes(i));
 
+			//noinspection ForLoopWithMissingComponent
 			for (; i < normalSize; i++) {
-				int data = stream.read();
+				final int data = stream.read();
 				if (data == -1) {
-					throw new IllegalStateException();
+					throw new IllegalStateException(
+							"Attempting to read a byte from the stream but the stream has ended");
 				}
 				dataBuffer.write(data);
 				fingerprint = (fingerprint >> 1) + gear[data];
-				if ((fingerprint & MASK_S) == 0) {
+				if ((fingerprint & NlfiedlerRustChunkerCore.MASK_S) == 0) {
 					return dataBuffer.toByteArray();
 				}
 			}
+			//noinspection ForLoopWithMissingComponent
 			for (; i < n; i++) {
-				int data = stream.read();
+				final int data = stream.read();
 				if (data == -1) {
-					throw new IllegalStateException();
+					throw new IllegalStateException(
+							"Attempting to read a byte from the stream but the stream has ended");
 				}
 				dataBuffer.write(data);
 				fingerprint = (fingerprint >> 1) + gear[data];
-				if ((fingerprint & MASK_L) == 0) {
+				if ((fingerprint & NlfiedlerRustChunkerCore.MASK_L) == 0) {
 					return dataBuffer.toByteArray();
 				}
 			}
 
 			return dataBuffer.toByteArray();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}

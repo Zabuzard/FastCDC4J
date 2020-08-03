@@ -17,11 +17,11 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	/**
 	 * The source iterator used to generate inner iterators from.
 	 */
-	private final Iterator<X> outerIterator;
+	private final Iterator<? extends X> outerIterator;
 	/**
 	 * Function that provides the final inner iterators based on the outer iterators data.
 	 */
-	private final Function<X, Iterator<Y>> provider;
+	private final Function<? super X, ? extends Iterator<Y>> provider;
 	/**
 	 * The current inner iterator to iterate over.
 	 */
@@ -33,7 +33,8 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	 * @param outerIterator The source iterator used to generate inner iterators from
 	 * @param provider      Function that provides the final inner iterators based on the outer iterators data
 	 */
-	public FlatIterator(Iterator<X> outerIterator, Function<X, Iterator<Y>> provider) {
+	public FlatIterator(final Iterator<? extends X> outerIterator,
+			final Function<? super X, ? extends Iterator<Y>> provider) {
 		this.outerIterator = outerIterator;
 		this.provider = provider;
 	}
@@ -41,7 +42,7 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	@Override
 	public boolean hasNext() {
 		while (true) {
-			boolean hasNext = currentInnerIter != null && currentInnerIter.hasNext();
+			final boolean hasNext = currentInnerIter != null && currentInnerIter.hasNext();
 			if (hasNext) {
 				return true;
 			}
@@ -59,7 +60,7 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	public Y next() {
 		// hasNext also prepares currentInnerIter
 		if (!hasNext()) {
-			throw new NoSuchElementException();
+			throw new NoSuchElementException("Attempting to get the next element but the iterator is out of elements");
 		}
 
 		return currentInnerIter.next();

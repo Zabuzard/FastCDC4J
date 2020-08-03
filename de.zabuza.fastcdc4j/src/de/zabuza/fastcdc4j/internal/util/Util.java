@@ -9,7 +9,8 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class Util {
+public enum Util {
+	;
 	/**
 	 * All characters available in the hexadecimal-system, as UTF-8 encoded array.
 	 */
@@ -22,13 +23,18 @@ public final class Util {
 	 *
 	 * @return Hexadecimal representation
 	 */
-	public static String bytesToHex(byte[] bytes) {
+	@SuppressWarnings("MagicNumber")
+	public static String bytesToHex(final byte[] bytes) {
 		// See https://stackoverflow.com/a/9855338/2411243
-		byte[] hexChars = new byte[bytes.length * 2];
+		//noinspection MultiplyOrDivideByPowerOfTwo
+		final byte[] hexChars = new byte[bytes.length * 2];
+		//noinspection ArrayLengthInLoopCondition
 		for (int j = 0; j < bytes.length; j++) {
-			int v = bytes[j] & 0xFF;
-			hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-			hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
+			final int v = bytes[j] & 0xFF;
+			//noinspection MultiplyOrDivideByPowerOfTwo
+			hexChars[j * 2] = Util.HEX_ARRAY[v >>> 4];
+			//noinspection MultiplyOrDivideByPowerOfTwo
+			hexChars[j * 2 + 1] = Util.HEX_ARRAY[v & 0x0F];
 		}
 		return new String(hexChars, StandardCharsets.UTF_8);
 	}
@@ -41,11 +47,11 @@ public final class Util {
 	 *
 	 * @return The computed hash
 	 */
-	public static byte[] hash(String method, byte[] data) {
+	public static byte[] hash(final String method, final byte[] data) {
 		try {
 			return MessageDigest.getInstance(method)
 					.digest(data);
-		} catch (NoSuchAlgorithmException e) {
+		} catch (final NoSuchAlgorithmException e) {
 			throw new IllegalStateException("Hash method must be supported", e);
 		}
 	}

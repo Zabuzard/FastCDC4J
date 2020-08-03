@@ -6,10 +6,12 @@ package de.zabuza.fastcdc4j.internal.chunking;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public final class HashTables {
+public enum HashTables {
+	;
 	/**
 	 * Table used by RTPal.
 	 */
+	@SuppressWarnings("OverlyLargePrimitiveArrayInitializer")
 	private static final long[] RTPAL =
 			{ 0x5a16b18f2aac863eL, 0x05fad735784f09eaL, 0x355c6a3868fe64afL, 0x57df89c95716c702L, 0x46ea7572135544a6L,
 					0x6291d5376cd79d73L, 0x2a6e072b609b0bbfL, 0x110f7f895ec438b7L, 0x2fc580f60659f690L,
@@ -78,6 +80,7 @@ public final class HashTables {
 	/**
 	 * Table used by NlFielder-Rust.
 	 */
+	@SuppressWarnings("OverlyLargePrimitiveArrayInitializer")
 	private static final long[] NLFIEDLER_RUST =
 			{ 0x5c95c078L, 0x22408989L, 0x2d48a214L, 0x12842087L, 0x530f8afbL, 0x474536b9L, 0x2963b4f1L, 0x44cb738bL,
 					0x4ea7403dL, 0x4d606b6eL, 0x074ec5d3L, 0x3af39d18L, 0x726003caL, 0x37a62a74L, 0x51a2f58eL,
@@ -123,7 +126,7 @@ public final class HashTables {
 	 * @return The table
 	 */
 	public static long[] getRtpal() {
-		return RTPAL;
+		return HashTables.RTPAL.clone();
 	}
 
 	/**
@@ -132,6 +135,6 @@ public final class HashTables {
 	 * @return The table
 	 */
 	public static long[] getNlfiedlerRust() {
-		return NLFIEDLER_RUST;
+		return HashTables.NLFIEDLER_RUST.clone();
 	}
 }

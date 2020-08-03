@@ -50,6 +50,7 @@ public final class ChunkerBuilder {
 	/**
 	 * The default expected size of chunks, in bytes, used by all chunkers.
 	 */
+	@SuppressWarnings("MultiplyOrDivideByPowerOfTwo")
 	private static final int DEFAULT_EXPECTED_CHUNK_SIZE = 8 * 1_024;
 
 	/**
@@ -196,6 +197,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setHashTable(final long[] hashTable) {
+		//noinspection MagicNumber
 		if (hashTable.length != 256) {
 			throw new IllegalArgumentException(
 					"Hash table must have a length of 256, one hash per byte value, was: " + hashTable.length);

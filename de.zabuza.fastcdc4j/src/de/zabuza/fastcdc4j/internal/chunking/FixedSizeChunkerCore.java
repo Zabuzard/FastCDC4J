@@ -23,18 +23,19 @@ public final class FixedSizeChunkerCore implements IterativeStreamChunkerCore {
 	 *
 	 * @param chunkSize The fixed chunk size to use for splitting
 	 */
-	public FixedSizeChunkerCore(int chunkSize) {
+	public FixedSizeChunkerCore(final int chunkSize) {
 		this.chunkSize = chunkSize;
 	}
 
 	@Override
 	public byte[] readNextChunk(final InputStream stream, final long size, final long currentOffset) {
 		// Read up to CHUNK_SIZE many bytes
-		int length = currentOffset + chunkSize <= size ? chunkSize : (int) (size - currentOffset);
+		//noinspection NumericCastThatLosesPrecision
+		final int length = currentOffset + chunkSize <= size ? chunkSize : (int) (size - currentOffset);
 
 		try {
 			return stream.readNBytes(length);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
