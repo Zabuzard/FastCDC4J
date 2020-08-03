@@ -1,9 +1,15 @@
 package de.zabuza.fastcdc4j.internal.chunking;
 
 /**
+ * Provides different hash tables, used by several {@link de.zabuza.fastcdc4j.external.chunking.Chunker}s as noise to
+ * improve the splitting behavior for relatively similar content.
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class HashTables {
+	/**
+	 * Table used by RTPal.
+	 */
 	private static final long[] RTPAL =
 			{ 0x5a16b18f2aac863eL, 0x05fad735784f09eaL, 0x355c6a3868fe64afL, 0x57df89c95716c702L, 0x46ea7572135544a6L,
 					0x6291d5376cd79d73L, 0x2a6e072b609b0bbfL, 0x110f7f895ec438b7L, 0x2fc580f60659f690L,
@@ -69,6 +75,9 @@ public final class HashTables {
 					0x5445faa82e02e158L, 0x0065712926726beaL, 0x1bed3b9a62fbf757L, 0x1767b815257b83d4L,
 					0x000eab4e77327b81L, 0x0fd333301966ff16L, 0x6780eb8339b83286L, 0x7652a5e647799673L,
 					0x43c0db665e364315L, 0x6fe4fe01606d405dL, 0x6833dbd876b03920L };
+	/**
+	 * Table used by NlFielder-Rust.
+	 */
 	private static final long[] NLFIEDLER_RUST =
 			{ 0x5c95c078L, 0x22408989L, 0x2d48a214L, 0x12842087L, 0x530f8afbL, 0x474536b9L, 0x2963b4f1L, 0x44cb738bL,
 					0x4ea7403dL, 0x4d606b6eL, 0x074ec5d3L, 0x3af39d18L, 0x726003caL, 0x37a62a74L, 0x51a2f58eL,
@@ -108,10 +117,20 @@ public final class HashTables {
 					0x0dc82c11L, 0x23ffe354L, 0x2eac53a6L, 0x16139e09L, 0x0afd0dbcL, 0x2a4d4237L, 0x56a368c7L,
 					0x234325e4L, 0x2dce9187L, 0x32e8ea7eL };
 
+	/**
+	 * Gets the table used by RTPal.
+	 *
+	 * @return The table
+	 */
 	public static long[] getRtpal() {
 		return RTPAL;
 	}
 
+	/**
+	 * Gets the table used by Nlfiedler-Rust
+	 *
+	 * @return The table
+	 */
 	public static long[] getNlfiedlerRust() {
 		return NLFIEDLER_RUST;
 	}

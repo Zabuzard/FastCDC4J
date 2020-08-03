@@ -11,6 +11,9 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * Class oferring a {@link #main(String[])} method that compares two given paths with each other and prints statistics
+ * for patching one file to the other using chunks.
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class PatchSummary {

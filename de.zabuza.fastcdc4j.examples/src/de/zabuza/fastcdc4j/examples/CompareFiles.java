@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Class oferring a {@link #main(String[])} method that compares two given files with each other and print statistics of
+ * their chunks.
+ *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class CompareFiles {
