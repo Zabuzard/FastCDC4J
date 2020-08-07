@@ -29,13 +29,21 @@ final class PatchSummary {
 		final Path currentBuild = Path.of(args[1]);
 
 		final Map<String, Chunker> descriptionToChunker = new HashMap<>();
-		descriptionToChunker.put("FSC 8KB", new ChunkerBuilder().setChunkerOption(ChunkerOption.FIXED_SIZE_CHUNKING)
-				.build());
-		descriptionToChunker.put("FastCDC 8KB RTPal", new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
-				.build());
-		descriptionToChunker.put("NlFiedlerRust 8KB NlFiedlerRust",
-				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
+		//		descriptionToChunker.put("FSC 8KB", new ChunkerBuilder().setChunkerOption(ChunkerOption.FIXED_SIZE_CHUNKING)
+		//				.build());
+		//		descriptionToChunker.put("FastCDC 8KB RTPal", new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
+		//				.build());
+		//		descriptionToChunker.put("NlFiedlerRust 8KB NlFiedlerRust",
+		//				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
+		//						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
+		//						.build());
+		descriptionToChunker.put("FastCDC 8KB NlFiedlerRust",
+				new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
 						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
+						.build());
+		descriptionToChunker.put("NlFiedlerRust 8KB RTPal",
+				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
+						.setHashTableOption(HashTableOption.RTPAL)
 						.build());
 
 		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild, currentBuild);

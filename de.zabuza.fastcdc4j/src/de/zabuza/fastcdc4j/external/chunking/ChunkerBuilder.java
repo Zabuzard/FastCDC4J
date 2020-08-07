@@ -44,19 +44,18 @@ import java.security.NoSuchAlgorithmException;
  */
 public final class ChunkerBuilder {
 	/**
-	 * The default hash method to use by all chunkers.
-	 */
-	private static final String DEFAULT_HASH_METHOD = "SHA-1";
-	/**
 	 * The default expected size of chunks, in bytes, used by all chunkers.
 	 */
 	@SuppressWarnings("MultiplyOrDivideByPowerOfTwo")
 	private static final int DEFAULT_EXPECTED_CHUNK_SIZE = 8 * 1_024;
-
 	/**
-	 * The chunker option to use.
+	 * The default hash method to use by all chunkers.
 	 */
-	private ChunkerOption chunkerOption = ChunkerOption.FAST_CDC;
+	private static final String DEFAULT_HASH_METHOD = "SHA-1";
+	/**
+	 * The default normalization level to use for choosing the masks in certain chunkers.
+	 */
+	private static final int DEFAULT_NORMALIZATION_LEVEL = 2;
 	/**
 	 * The chunker to use. Has priority over {@link #chunkerCore} and {@link #chunkerOption}.
 	 */
@@ -66,21 +65,41 @@ public final class ChunkerBuilder {
 	 */
 	private IterativeStreamChunkerCore chunkerCore;
 	/**
-	 * The hash method to use for representing the data of chunks.
+	 * The chunker option to use.
 	 */
-	private String hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
+	private ChunkerOption chunkerOption = ChunkerOption.FAST_CDC;
 	/**
 	 * The expected size of chunks, in bytes.
 	 */
 	private int expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
 	/**
-	 * The option to use for the hash table used by the chunker algorithm.
+	 * The hash method to use for representing the data of chunks.
 	 */
-	private HashTableOption hashTableOption = HashTableOption.RTPAL;
+	private String hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 	/**
 	 * The hash table to use by the chunker algorithm. Has priority over {@link #hashTableOption}.
 	 */
 	private long[] hashTable;
+	/**
+	 * The option to use for the hash table used by the chunker algorithm.
+	 */
+	private HashTableOption hashTableOption = HashTableOption.RTPAL;
+	/**
+	 * Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
+	 */
+	private Long maskLarge;
+	/**
+	 * The algorithm to use for generating masks used by certain chunkers.
+	 */
+	private MaskOption maskOption = MaskOption.FAST_CDC;
+	/**
+	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
+	 */
+	private Long maskSmall;
+	/**
+	 * The normalization level to use for choosing the masks in certain chunkers.
+	 */
+	private int normalizationLevel = ChunkerBuilder.DEFAULT_NORMALIZATION_LEVEL;
 
 	/**
 	 * Builds a chunker using the set properties.
@@ -88,6 +107,8 @@ public final class ChunkerBuilder {
 	 * @return A chunker using the set properties
 	 */
 	public Chunker build() {
+		// TODO Add argument validation to all code
+		// TODO Maybe add Adler and Rabin CDC alternatives
 		if (chunker != null) {
 			return chunker;
 		}
@@ -97,23 +118,58 @@ public final class ChunkerBuilder {
 			case NLFIEDLER_RUST -> HashTables.getNlfiedlerRust();
 		};
 
+		final MaskGenerator maskGenerator = new MaskGenerator(maskOption, normalizationLevel, expectedChunkSize);
+		long maskSmallToUse = maskSmall != null ? maskSmall : maskGenerator.generateSmallMask();
+		long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
+
 		final IterativeStreamChunkerCore coreToUse = chunkerCore != null ? chunkerCore : switch (chunkerOption) {
-			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, hashTableToUse);
-			case NLFIEDLER_RUST -> new NlfiedlerRustChunkerCore(expectedChunkSize, hashTableToUse);
+			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, hashTableToUse, maskSmallToUse, maskLargeToUse);
+			case NLFIEDLER_RUST -> new NlfiedlerRustChunkerCore(expectedChunkSize, hashTableToUse, maskSmallToUse,
+					maskLargeToUse);
 			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore(expectedChunkSize);
 		};
 		return new IterativeStreamChunker(coreToUse, hashMethod);
 	}
 
 	/**
-	 * Sets the chunker option to use.
-	 *
-	 * @param chunkerOption The option to use
+	 * Sets the builder to a configuration for the original FastCDC algorithm.
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder setChunkerOption(final ChunkerOption chunkerOption) {
-		this.chunkerOption = chunkerOption;
+	public ChunkerBuilder fastCdc() {
+		chunkerOption = ChunkerOption.FAST_CDC;
+		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
+		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		hashTableOption = HashTableOption.RTPAL;
+		normalizationLevel = 2;
+		maskOption = MaskOption.FAST_CDC;
+		return this;
+	}
+
+	/**
+	 * Sets the builder to a configuration for the baseline Fixed-Size-Chunking algorithm.
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder fsc() {
+		chunkerOption = ChunkerOption.FIXED_SIZE_CHUNKING;
+		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
+		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		return this;
+	}
+
+	/**
+	 * Sets the builder to a configuration for the modified FastCDC algorithm of Nathan Fiedlers Rust implementation.
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder nlFiedlerRust() {
+		chunkerOption = ChunkerOption.NLFIEDLER_RUST;
+		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
+		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		hashTableOption = HashTableOption.NLFIEDLER_RUST;
+		normalizationLevel = 1;
+		maskOption = MaskOption.NLFIEDLER_RUST;
 		return this;
 	}
 
@@ -144,20 +200,14 @@ public final class ChunkerBuilder {
 	}
 
 	/**
-	 * Sets the hash method to use for representing the data of chunks.
+	 * Sets the chunker option to use.
 	 *
-	 * @param hashMethod The hash method to use, has to be accepted and supported by {@link
-	 *                   java.security.MessageDigest}.
+	 * @param chunkerOption The option to use
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder setHashMethod(final String hashMethod) {
-		try {
-			MessageDigest.getInstance(hashMethod);
-		} catch (final NoSuchAlgorithmException e) {
-			throw new IllegalArgumentException("The given hash method is not supported, was: " + hashMethod, e);
-		}
-		this.hashMethod = hashMethod;
+	public ChunkerBuilder setChunkerOption(final ChunkerOption chunkerOption) {
+		this.chunkerOption = chunkerOption;
 		return this;
 	}
 
@@ -177,14 +227,20 @@ public final class ChunkerBuilder {
 	}
 
 	/**
-	 * Sets the option to use for the hash table used by the chunker algorithm.
+	 * Sets the hash method to use for representing the data of chunks.
 	 *
-	 * @param hashTableOption The option to use for the hash table
+	 * @param hashMethod The hash method to use, has to be accepted and supported by {@link
+	 *                   java.security.MessageDigest}.
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder setHashTableOption(final HashTableOption hashTableOption) {
-		this.hashTableOption = hashTableOption;
+	public ChunkerBuilder setHashMethod(final String hashMethod) {
+		try {
+			MessageDigest.getInstance(hashMethod);
+		} catch (final NoSuchAlgorithmException e) {
+			throw new IllegalArgumentException("The given hash method is not supported, was: " + hashMethod, e);
+		}
+		this.hashMethod = hashMethod;
 		return this;
 	}
 
@@ -207,40 +263,62 @@ public final class ChunkerBuilder {
 	}
 
 	/**
-	 * Sets the builder to a configuration for the original FastCDC algorithm.
+	 * Sets the option to use for the hash table used by the chunker algorithm.
+	 *
+	 * @param hashTableOption The option to use for the hash table
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder fastCdc() {
-		chunkerOption = ChunkerOption.FAST_CDC;
-		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
-		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
-		hashTableOption = HashTableOption.RTPAL;
+	public ChunkerBuilder setHashTableOption(final HashTableOption hashTableOption) {
+		this.hashTableOption = hashTableOption;
 		return this;
 	}
 
 	/**
-	 * Sets the builder to a configuration for the modified FastCDC algorithm of Nathan Fiedlers Rust implementation.
+	 * Sets the mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
+	 *
+	 * @param maskLarge The mask to set
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder nlFiedlerRust() {
-		chunkerOption = ChunkerOption.NLFIEDLER_RUST;
-		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
-		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
-		hashTableOption = HashTableOption.NLFIEDLER_RUST;
+	public ChunkerBuilder setMaskLarge(final long maskLarge) {
+		this.maskLarge = maskLarge;
 		return this;
 	}
 
 	/**
-	 * Sets the builder to a configuration for the baseline Fixed-Size-Chunking algorithm.
+	 * Sets the algorithm used to generate the masks used by certain chunkers.
+	 *
+	 * @param maskOption The mask option to set
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder fsc() {
-		chunkerOption = ChunkerOption.FIXED_SIZE_CHUNKING;
-		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
-		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+	public ChunkerBuilder setMaskOption(final MaskOption maskOption) {
+		this.maskOption = maskOption;
+		return this;
+	}
+
+	/**
+	 * Sets the mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
+	 *
+	 * @param maskSmall The mask to set
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder setMaskSmall(final long maskSmall) {
+		this.maskSmall = maskSmall;
+		return this;
+	}
+
+	/**
+	 * Sets the normalization level used for choosing the masks in certain chunkers.
+	 *
+	 * @param normalizationLevel The normalization level to use for choosing the masks in certain chunkers.
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder setNormalizationLevel(final int normalizationLevel) {
+		this.normalizationLevel = normalizationLevel;
 		return this;
 	}
 }

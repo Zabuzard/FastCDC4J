@@ -14,16 +14,6 @@ import java.io.UncheckedIOException;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCore {
-	// TODO Make dependent on given expected size
-	/**
-	 * Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
-	 */
-	private static final long MASK_L = 0b1111_1111_1111L;
-	// TODO Make dependent on given expected size
-	/**
-	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
-	 */
-	private static final long MASK_S = 0b11_1111_1111_1111L;
 	/**
 	 * Maximal size for a single chunk, in bytes.
 	 */
@@ -44,6 +34,14 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	 * content.
 	 */
 	private final long[] gear;
+	/**
+	 * Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
+	 */
+	private final long maskLarge;
+	/**
+	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
+	 */
+	private final long maskSmall;
 
 	/**
 	 * Creates a new core.
@@ -51,10 +49,16 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	 * @param expectedSize The expected size for a single chunk, in bytes
 	 * @param gear         The hash table, also known as {@code gear} used as noise to improve the splitting behavior
 	 *                     for relatively similar content
+	 * @param maskSmall    Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a
+	 *                     split
+	 * @param maskLarge    Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a
+	 *                     split
 	 */
-	public NlfiedlerRustChunkerCore(final int expectedSize, final long[] gear) {
+	public NlfiedlerRustChunkerCore(final int expectedSize, final long[] gear, final long maskSmall, final long maskLarge) {
 		this.expectedSize = expectedSize;
 		this.gear = gear.clone();
+		this.maskSmall = maskSmall;
+		this.maskLarge = maskLarge;
 	}
 
 	@Override
@@ -89,7 +93,7 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 				}
 				dataBuffer.write(data);
 				fingerprint = (fingerprint >> 1) + gear[data];
-				if ((fingerprint & NlfiedlerRustChunkerCore.MASK_S) == 0) {
+				if ((fingerprint & maskSmall) == 0) {
 					return dataBuffer.toByteArray();
 				}
 			}
@@ -102,7 +106,7 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 				}
 				dataBuffer.write(data);
 				fingerprint = (fingerprint >> 1) + gear[data];
-				if ((fingerprint & NlfiedlerRustChunkerCore.MASK_L) == 0) {
+				if ((fingerprint & maskLarge) == 0) {
 					return dataBuffer.toByteArray();
 				}
 			}

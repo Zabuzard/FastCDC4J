@@ -55,4 +55,20 @@ public enum Util {
 			throw new IllegalStateException("Hash method must be supported", e);
 		}
 	}
+
+	/**
+	 * Computes the logarithm to the base 2 of the given value.
+	 * @param x The value to compute the log2 of
+	 * @return The log2 of the given value
+	 */
+	public static int log2(int x) {
+		if (x >= 0) {
+			// Safe binary-only conversion without floating points
+			return Integer.bitCount(Integer.highestOneBit(x) - 1);
+		}
+		// Adding epsilon to mitigate floating point errors, see https://stackoverflow.com/a/3305400/2411243
+		return (int) (Math.log(x) / Math.log(2) + 1e-12);
+
+
+	}
 }
