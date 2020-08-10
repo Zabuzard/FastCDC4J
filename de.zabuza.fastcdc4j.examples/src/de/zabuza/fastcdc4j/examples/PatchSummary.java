@@ -2,8 +2,16 @@ package de.zabuza.fastcdc4j.examples;
 
 import de.zabuza.fastcdc4j.external.chunking.*;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -37,13 +45,33 @@ final class PatchSummary {
 		//				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
 		//						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
 		//						.build());
-		descriptionToChunker.put("FastCDC 8KB NlFiedlerRust",
+		//		descriptionToChunker.put("FastCDC 8KB NlFiedlerRust",
+		//				new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
+		//						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
+		//						.build());
+		//		descriptionToChunker.put("NlFiedlerRust 8KB RTPal",
+		//				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
+		//						.setHashTableOption(HashTableOption.RTPAL)
+		//						.build());
+		descriptionToChunker.put("FSC 1MB", new ChunkerBuilder().setChunkerOption(ChunkerOption.FIXED_SIZE_CHUNKING)
+				.setExpectedChunkSize(1024 * 1024)
+				.build());
+		descriptionToChunker.put("FastCDC 1MB RTPal", new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
+				.build());
+		descriptionToChunker.put("NlFiedlerRust 1MB NlFiedlerRust",
+				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
+						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
+						.setExpectedChunkSize(1024 * 1024)
+						.build());
+		descriptionToChunker.put("FastCDC 1MB NlFiedlerRust",
 				new ChunkerBuilder().setChunkerOption(ChunkerOption.FAST_CDC)
 						.setHashTableOption(HashTableOption.NLFIEDLER_RUST)
+						.setExpectedChunkSize(1024 * 1024)
 						.build());
-		descriptionToChunker.put("NlFiedlerRust 8KB RTPal",
+		descriptionToChunker.put("NlFiedlerRust 1MB RTPal",
 				new ChunkerBuilder().setChunkerOption(ChunkerOption.NLFIEDLER_RUST)
 						.setHashTableOption(HashTableOption.RTPAL)
+						.setExpectedChunkSize(1024 * 1024)
 						.build());
 
 		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild, currentBuild);
@@ -53,16 +81,53 @@ final class PatchSummary {
 						currentBuild));
 	}
 
+	private static void chunkPath(final Chunker chunker, final Path path, final Consumer<Chunk> chunkAction) {
+		AtomicLong processedBytesTotal = new AtomicLong(0);
+		AtomicLong processedBytesSincePrint = new AtomicLong(0);
+		AtomicLong timeStart = new AtomicLong(System.nanoTime());
+		ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+		final long nanosPerSecond = 1_000_000_000L;
+		Runnable statPrinter = () -> {
+			AtomicLong timeEnd = new AtomicLong(System.nanoTime());
+			long timeDiff = timeEnd.get() - timeStart.get();
+			if (timeDiff < nanosPerSecond) {
+				return;
+			}
+			timeStart.set(timeEnd.get());
+			long bytesPerSecond = processedBytesSincePrint.get() / (timeDiff / nanosPerSecond);
+
+			System.out.printf("\t%12d b/s, %12d total%n", bytesPerSecond, processedBytesTotal.get());
+
+			processedBytesSincePrint.set(0);
+		};
+		var statPrintTask = service.scheduleAtFixedRate(statPrinter, 0, 1, TimeUnit.SECONDS);
+
+		try {
+			Files.walk(path)
+					.parallel()
+					.filter(Files::isRegularFile)
+					.map(chunker::chunk)
+					.forEach(chunks -> chunks.forEach(chunk -> {
+						processedBytesTotal.addAndGet(chunk.getLength());
+						processedBytesSincePrint.addAndGet(chunk.getLength());
+
+						chunkAction.accept(chunk);
+					}));
+		} catch (IOException e) {
+			throw new UncheckedIOException(e);
+		}
+
+		statPrintTask.cancel(false);
+	}
+
 	private static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
 			final Path currentBuild) {
-		final List<ChunkMetadata> previousChunks = new ArrayList<>();
-		chunker.chunk(previousBuild)
-				.forEach(chunk -> previousChunks.add(chunk.toChunkMetadata()));
+		final List<ChunkMetadata> previousChunks = Collections.synchronizedList(new ArrayList<>());
+		chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
 
-		final List<ChunkMetadata> currentChunks = new ArrayList<>();
-		chunker.chunk(currentBuild)
-				.forEach(chunk -> currentChunks.add(chunk.toChunkMetadata()));
+		final List<ChunkMetadata> currentChunks = Collections.synchronizedList(new ArrayList<>());
+		chunkPath(chunker, currentBuild, chunk -> currentChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
 		final PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
@@ -104,26 +169,6 @@ final class PatchSummary {
 		computePatch();
 	}
 
-	private List<ChunkMetadata> getChunksToAdd() {
-		return Collections.unmodifiableList(chunksToAdd);
-	}
-
-	private List<ChunkMetadata> getChunksToMove() {
-		return Collections.unmodifiableList(chunksToMove);
-	}
-
-	private List<ChunkMetadata> getChunksToRemove() {
-		return Collections.unmodifiableList(chunksToRemove);
-	}
-
-	private long getPatchSize() {
-		return patchSize;
-	}
-
-	private List<ChunkMetadata> getUntouchedChunks() {
-		return Collections.unmodifiableList(untouchedChunks);
-	}
-
 	private void computePatch() {
 		// Chunks to remove
 		previousBuildSummary.getChunks()
@@ -149,6 +194,26 @@ final class PatchSummary {
 		patchSize = chunksToAdd.stream()
 				.mapToLong(ChunkMetadata::getLength)
 				.sum();
+	}
+
+	private List<ChunkMetadata> getChunksToAdd() {
+		return Collections.unmodifiableList(chunksToAdd);
+	}
+
+	private List<ChunkMetadata> getChunksToMove() {
+		return Collections.unmodifiableList(chunksToMove);
+	}
+
+	private List<ChunkMetadata> getChunksToRemove() {
+		return Collections.unmodifiableList(chunksToRemove);
+	}
+
+	private long getPatchSize() {
+		return patchSize;
+	}
+
+	private List<ChunkMetadata> getUntouchedChunks() {
+		return Collections.unmodifiableList(untouchedChunks);
 	}
 
 	private static final class BuildSummary {

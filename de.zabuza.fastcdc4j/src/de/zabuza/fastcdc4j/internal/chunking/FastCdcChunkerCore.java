@@ -44,8 +44,8 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	 * Creates a new core.
 	 *
 	 * @param expectedSize The expected size for a single chunk, in bytes
-	 * @param minSize The minimal size for a single chunk, in bytes
-	 * @param maxSize The maximal size for a single chunk, in bytes
+	 * @param minSize      The minimal size for a single chunk, in bytes
+	 * @param maxSize      The maximal size for a single chunk, in bytes
 	 * @param gear         The hash table, also known as {@code gear} used as noise to improve the splitting behavior
 	 *                     for relatively similar content
 	 * @param maskSmall    Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a
@@ -53,7 +53,8 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	 * @param maskLarge    Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a
 	 *                     split
 	 */
-	public FastCdcChunkerCore(final int expectedSize, final int minSize, final int maxSize, final long[] gear, final long maskSmall, final long maskLarge) {
+	public FastCdcChunkerCore(final int expectedSize, final int minSize, final int maxSize, final long[] gear,
+			final long maskSmall, final long maskLarge) {
 		this.expectedSize = expectedSize;
 		this.minSize = minSize;
 		this.maxSize = maxSize;
