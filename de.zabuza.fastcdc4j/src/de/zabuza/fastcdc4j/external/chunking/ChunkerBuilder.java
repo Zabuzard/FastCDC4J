@@ -19,11 +19,21 @@ import java.security.NoSuchAlgorithmException;
  * for a simplified interface.
  * {@link #setChunkerOption(ChunkerOption)} can be used to choose from the predefined algorithms.
  * <p>
- * The algorithms will try to strive for an expected chunk size given by {@link #setExpectedChunkSize(int)}.
+ * The algorithms will try to strive for an expected chunk size given by {@link #setExpectedChunkSize(int)},
+ * a minimal chunk size given by {@link #setMinimalChunkSize(int)} and a maximal chunk size given by {@link #setMaximalChunkSize(int)}.
  * <p>
  * Most of the algorithms internally use a hash table as source for predicted noise to steer the algorithm, a custom
  * table can be provided by {@link #setHashTable(long[])}.
  * Alternatively, {@link #setHashTableOption(HashTableOption)} can be used to choose from predefined tables.
+ * <p>
+ * The algorithms are heavily steered by masks which define the cut-points. By default they are generated randomly using
+ * a fixed seed that can be changed by using {@link #setMaskGenerationSeed(long)}. There are different techniques available
+ * to generate masks, they can be set using {@link #setMaskOption(MaskOption)}.
+ * To achieve a distribution of chunk sizes as close as possible to the expected size, normalization levels are used
+ * during mask generation. {@link #setNormalizationLevel(int)} is used to change the level. The higher the level, the closer
+ * the sizes are to the expected size, for the cost of a worse deduplication rate.
+ * Alternatively, masks can be set manually using {@link #setMaskSmall(long)} for the mask used when the chunk is still
+ * smaller than the expected size and {@link #setMaskLarge(long)} for bigger chunks respectively.
  * <p>
  * After a chunk has been read, a hash is generated based on its content. The algorithm used for this process can be
  * set by {@link #setHashMethod(String)}, it has to be supported and accepted by {@link java.security.MessageDigest}.
@@ -32,10 +42,15 @@ import java.security.NoSuchAlgorithmException;
  * <p>
  * The <b>default configuration</b> of the builder is:
  * <ul>
- *     <li>{@link ChunkerOption#FAST_CDC}</li>
- *     <li>{@code 8 * 1024}</li>
- *     <li>{@link HashTableOption#RTPAL}</li>
- *     <li>{@code SHA-1}</li>
+ *     <li>Chunker option: {@link ChunkerOption#FAST_CDC}</li>
+ *     <li>Expected size: {@code 8 * 1024}</li>
+ *     <li>Minimal size: {@code 2 * 1024}</li>
+ *     <li>Maximal size: {@code 64 * 1024}</li>
+ *     <li>Hash table option: {@link HashTableOption#RTPAL}</li>
+ *     <li>Mask generation seed: {@code 941568351}</li>
+ *     <li>Mask option: {@link MaskOption#FAST_CDC}</li>
+ *     <li>Normalization level: {@code 2}</li>
+ *     <li>Hash method: {@code SHA-1}</li>
  * </ul>
  * The methods {@link #fastCdc()}, {@link #nlFiedlerRust()} and {@link #fsc()} can be used to get a configuration
  * that uses the given algorithms as originally proposed.
@@ -56,6 +71,14 @@ public final class ChunkerBuilder {
 	 * The default seed used for mask generation. The number was chosen random and has no special meaning.
 	 */
 	private static final long DEFAULT_MASK_GENERATION_SEED = 941_568_351L;
+	/**
+	 * The default factor to apply to the expected chunk size to receive the maximal chunk size.
+	 */
+	private static final double DEFAULT_MAX_SIZE_FACTOR = 8;
+	/**
+	 * The default factor to apply to the expected chunk size to receive the minimal chunk size.
+	 */
+	private static final double DEFAULT_MIN_SIZE_FACTOR = 0.25;
 	/**
 	 * The default normalization level to use for choosing the masks in certain chunkers.
 	 */
@@ -105,6 +128,16 @@ public final class ChunkerBuilder {
 	 */
 	private Long maskSmall;
 	/**
+	 * The expected size of chunks, in bytes.
+	 */
+	private int maximalChunkSize =
+			(int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
+	/**
+	 * The expected size of chunks, in bytes.
+	 */
+	private int minimalChunkSize =
+			(int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
+	/**
 	 * The normalization level to use for choosing the masks in certain chunkers.
 	 */
 	private int normalizationLevel = ChunkerBuilder.DEFAULT_NORMALIZATION_LEVEL;
@@ -132,9 +165,10 @@ public final class ChunkerBuilder {
 		long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
 
 		final IterativeStreamChunkerCore coreToUse = chunkerCore != null ? chunkerCore : switch (chunkerOption) {
-			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, hashTableToUse, maskSmallToUse, maskLargeToUse);
-			case NLFIEDLER_RUST -> new NlfiedlerRustChunkerCore(expectedChunkSize, hashTableToUse, maskSmallToUse,
-					maskLargeToUse);
+			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, minimalChunkSize, maximalChunkSize,
+					hashTableToUse, maskSmallToUse, maskLargeToUse);
+			case NLFIEDLER_RUST -> new NlfiedlerRustChunkerCore(expectedChunkSize, minimalChunkSize, maximalChunkSize,
+					hashTableToUse, maskSmallToUse, maskLargeToUse);
 			case FIXED_SIZE_CHUNKING -> new FixedSizeChunkerCore(expectedChunkSize);
 		};
 		return new IterativeStreamChunker(coreToUse, hashMethod);
@@ -149,6 +183,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.FAST_CDC;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
+		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
 		hashTableOption = HashTableOption.RTPAL;
 		normalizationLevel = 2;
 		maskOption = MaskOption.FAST_CDC;
@@ -165,6 +201,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.FIXED_SIZE_CHUNKING;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
+		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
 		return this;
 	}
 
@@ -177,6 +215,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.NLFIEDLER_RUST;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
+		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
+		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
 		hashTableOption = HashTableOption.NLFIEDLER_RUST;
 		normalizationLevel = 1;
 		maskOption = MaskOption.NLFIEDLER_RUST;
@@ -329,6 +369,36 @@ public final class ChunkerBuilder {
 	 */
 	public ChunkerBuilder setMaskSmall(final long maskSmall) {
 		this.maskSmall = maskSmall;
+		return this;
+	}
+
+	/**
+	 * Sets the maximal size of chunks, in bytes.
+	 *
+	 * @param maximalChunkSize The maximal size of chunks, in bytes. Must be positive.
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder setMaximalChunkSize(final int maximalChunkSize) {
+		if (maximalChunkSize < 0) {
+			throw new IllegalArgumentException("Maximal chunk size must be positive, was: " + maximalChunkSize);
+		}
+		this.maximalChunkSize = maximalChunkSize;
+		return this;
+	}
+
+	/**
+	 * Sets the minimal size of chunks, in bytes.
+	 *
+	 * @param minimalChunkSize The minimal size of chunks, in bytes. Must be positive.
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder setMinimalChunkSize(final int minimalChunkSize) {
+		if (minimalChunkSize < 0) {
+			throw new IllegalArgumentException("Minimal chunk size must be positive, was: " + minimalChunkSize);
+		}
+		this.minimalChunkSize = minimalChunkSize;
 		return this;
 	}
 

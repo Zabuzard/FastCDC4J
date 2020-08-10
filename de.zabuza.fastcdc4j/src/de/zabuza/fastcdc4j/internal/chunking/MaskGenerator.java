@@ -10,9 +10,25 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Utility class for generating masks that are used by {@link de.zabuza.fastcdc4j.external.chunking.Chunker}s.
+ *
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
+ */
 public final class MaskGenerator {
+	/**
+	 * The total size of the masks used by FastCDC.
+	 */
 	private static final int MASK_SIZE_TOTAL_FAST_CDC = 48;
 
+	/**
+	 * Generates a mask using the techniques described in FastCDC.
+	 *
+	 * @param effectiveBits The amount of effective bits in the mask (1s)
+	 * @param seed          The seed to use for distribution of the bits
+	 *
+	 * @return The generated mask
+	 */
 	private static long generateMaskFastCdc(final int effectiveBits, final long seed) {
 		// Shuffle a mask with 'effectiveBits' 1s and fill up the rest with '0'
 		// The most significant bit has to be 1 always, hence we only shuffle the rest
@@ -35,19 +51,53 @@ public final class MaskGenerator {
 		return Long.parseLong(mask, 2);
 	}
 
+	/**
+	 * Generates a mask using the techniques described in NlfiedlerRust.
+	 *
+	 * @param bits The amount of effective bits in the mask (1s)
+	 *
+	 * @return The generated mask
+	 */
 	private static long generateMaskNlfiedlerRust(int bits) {
 		return Long.parseLong("1".repeat(bits), 2);
 	}
 
+	/**
+	 * Gets the amount of effective bits to use (1s) for the given expected chunk size.
+	 *
+	 * @param expectedChunkSize The expected chunk size in bytes
+	 *
+	 * @return The amount of effective bits to use
+	 */
 	private static int getEffectiveBits(int expectedChunkSize) {
 		return Util.log2(expectedChunkSize);
 	}
 
+	/**
+	 * The expected chunk size in bytes.
+	 */
 	private final int expectedChunkSize;
+	/**
+	 * The option describing which technique to use for mask generation.
+	 */
 	private final MaskOption maskOption;
+	/**
+	 * The normalization level to use.
+	 */
 	private final int normalizationLevel;
+	/**
+	 * The seed to use for distributing bits in the mask generation.
+	 */
 	private final long seed;
 
+	/**
+	 * Creates a new mask generator.
+	 *
+	 * @param maskOption         The option describing which technique to use for mask generation
+	 * @param normalizationLevel The normalization level to use
+	 * @param expectedChunkSize  The expected chunk size in bytes
+	 * @param seed               The seed to use for distributing bits in the mask generation
+	 */
 	public MaskGenerator(final MaskOption maskOption, final int normalizationLevel, final int expectedChunkSize,
 			final long seed) {
 		this.maskOption = maskOption;
@@ -56,14 +106,31 @@ public final class MaskGenerator {
 		this.seed = seed;
 	}
 
+	/**
+	 * Generates a mask to be used for content larger than the expected chunk size, making chunking easier.
+	 *
+	 * @return The generated mask
+	 */
 	public long generateLargeMask() {
 		return generateMask(normalizationLevel);
 	}
 
+	/**
+	 * Generates a mask to be used for content smaller than the expected chunk size, making chunking harder.
+	 *
+	 * @return The generated mask
+	 */
 	public long generateSmallMask() {
 		return generateMask(-normalizationLevel);
 	}
 
+	/**
+	 * Generates a mask with the given offset for effective bits to the amount obtained by the expected chunk size.
+	 *
+	 * @param effectiveBitOffset The offset for the effective bits
+	 *
+	 * @return The generated mask
+	 */
 	private long generateMask(int effectiveBitOffset) {
 		int effectiveBits = getEffectiveBits(expectedChunkSize) + effectiveBitOffset;
 		return switch (maskOption) {
