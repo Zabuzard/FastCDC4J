@@ -58,7 +58,9 @@ public enum Util {
 
 	/**
 	 * Computes the logarithm to the base 2 of the given value.
+	 *
 	 * @param x The value to compute the log2 of
+	 *
 	 * @return The log2 of the given value
 	 */
 	public static int log2(int x) {

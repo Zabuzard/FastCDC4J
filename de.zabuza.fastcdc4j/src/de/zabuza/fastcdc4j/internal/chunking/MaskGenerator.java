@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public final class MaskGenerator {
 	private static final int MASK_SIZE_TOTAL_FAST_CDC = 48;
 
-	private static long generateMaskFastCdc(int effectiveBits) {
+	private static long generateMaskFastCdc(final int effectiveBits, final long seed) {
 		// Shuffle a mask with 'effectiveBits' 1s and fill up the rest with '0'
 		// The most significant bit has to be 1 always, hence we only shuffle the rest
 		List<Integer> maskBits = new ArrayList<>();
@@ -26,8 +26,7 @@ public final class MaskGenerator {
 			maskBits.add(0);
 			i++;
 		}
-		// TODO Use seeded random
-		Collections.shuffle(maskBits, new Random());
+		Collections.shuffle(maskBits, new Random(seed));
 
 		String mask = Stream.concat(Stream.of(1), maskBits.stream())
 				.map(Object::toString)
@@ -47,11 +46,14 @@ public final class MaskGenerator {
 	private final int expectedChunkSize;
 	private final MaskOption maskOption;
 	private final int normalizationLevel;
+	private final long seed;
 
-	public MaskGenerator(final MaskOption maskOption, final int normalizationLevel, final int expectedChunkSize) {
+	public MaskGenerator(final MaskOption maskOption, final int normalizationLevel, final int expectedChunkSize,
+			final long seed) {
 		this.maskOption = maskOption;
 		this.normalizationLevel = normalizationLevel;
 		this.expectedChunkSize = expectedChunkSize;
+		this.seed = seed;
 	}
 
 	public long generateLargeMask() {
@@ -63,10 +65,9 @@ public final class MaskGenerator {
 	}
 
 	private long generateMask(int effectiveBitOffset) {
-		// TODO Implement
 		int effectiveBits = getEffectiveBits(expectedChunkSize) + effectiveBitOffset;
 		return switch (maskOption) {
-			case FAST_CDC -> generateMaskFastCdc(effectiveBits);
+			case FAST_CDC -> generateMaskFastCdc(effectiveBits, seed);
 			case NLFIEDLER_RUST -> generateMaskNlfiedlerRust(effectiveBits);
 		};
 	}

@@ -53,6 +53,10 @@ public final class ChunkerBuilder {
 	 */
 	private static final String DEFAULT_HASH_METHOD = "SHA-1";
 	/**
+	 * The default seed used for mask generation. The number was chosen random and has no special meaning.
+	 */
+	private static final long DEFAULT_MASK_GENERATION_SEED = 941_568_351L;
+	/**
 	 * The default normalization level to use for choosing the masks in certain chunkers.
 	 */
 	private static final int DEFAULT_NORMALIZATION_LEVEL = 2;
@@ -84,6 +88,10 @@ public final class ChunkerBuilder {
 	 * The option to use for the hash table used by the chunker algorithm.
 	 */
 	private HashTableOption hashTableOption = HashTableOption.RTPAL;
+	/**
+	 * Seed to use for mask generation.
+	 */
+	private long maskGenerationSeed = ChunkerBuilder.DEFAULT_MASK_GENERATION_SEED;
 	/**
 	 * Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a split.
 	 */
@@ -118,7 +126,8 @@ public final class ChunkerBuilder {
 			case NLFIEDLER_RUST -> HashTables.getNlfiedlerRust();
 		};
 
-		final MaskGenerator maskGenerator = new MaskGenerator(maskOption, normalizationLevel, expectedChunkSize);
+		final MaskGenerator maskGenerator =
+				new MaskGenerator(maskOption, normalizationLevel, expectedChunkSize, maskGenerationSeed);
 		long maskSmallToUse = maskSmall != null ? maskSmall : maskGenerator.generateSmallMask();
 		long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
 
@@ -143,6 +152,7 @@ public final class ChunkerBuilder {
 		hashTableOption = HashTableOption.RTPAL;
 		normalizationLevel = 2;
 		maskOption = MaskOption.FAST_CDC;
+		maskGenerationSeed = ChunkerBuilder.DEFAULT_MASK_GENERATION_SEED;
 		return this;
 	}
 
@@ -271,6 +281,18 @@ public final class ChunkerBuilder {
 	 */
 	public ChunkerBuilder setHashTableOption(final HashTableOption hashTableOption) {
 		this.hashTableOption = hashTableOption;
+		return this;
+	}
+
+	/**
+	 * Sets the seed to use for mask generation.
+	 *
+	 * @param maskGenerationSeed The seed to use
+	 *
+	 * @return This builder instance
+	 */
+	public ChunkerBuilder setMaskGenerationSeed(final long maskGenerationSeed) {
+		this.maskGenerationSeed = maskGenerationSeed;
 		return this;
 	}
 
