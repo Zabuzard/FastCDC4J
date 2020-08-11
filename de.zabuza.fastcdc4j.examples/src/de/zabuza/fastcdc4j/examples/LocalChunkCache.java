@@ -12,7 +12,7 @@ import java.nio.file.Path;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "ClassIndependentOfModule", "ClassOnlyUsedInOneModule"})
+@SuppressWarnings({ "UseOfSystemOutOrSystemErr", "ClassIndependentOfModule", "ClassOnlyUsedInOneModule" })
 enum LocalChunkCache {
 	;
 

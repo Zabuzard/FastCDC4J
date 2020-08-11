@@ -53,6 +53,7 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	 * @param maskLarge    Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a
 	 *                     split
 	 */
+	@SuppressWarnings("ConstructorWithTooManyParameters")
 	public NlfiedlerRustChunkerCore(final int expectedSize, final int minSize, final int maxSize, final long[] gear,
 			final long maskSmall, final long maskLarge) {
 		this.expectedSize = expectedSize;

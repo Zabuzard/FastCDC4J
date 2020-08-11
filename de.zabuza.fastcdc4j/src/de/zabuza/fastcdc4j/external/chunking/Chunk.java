@@ -49,7 +49,7 @@ public interface Chunk {
 	String getHexHash();
 
 	/**
-	 * Converts this chunk to its corresponding metadata
+	 * Converts this chunk to its corresponding metadata.
 	 *
 	 * @return The metadata
 	 */

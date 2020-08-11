@@ -32,7 +32,7 @@ public final class MaskGenerator {
 	private static long generateMaskFastCdc(final int effectiveBits, final long seed) {
 		// Shuffle a mask with 'effectiveBits' 1s and fill up the rest with '0'
 		// The most significant bit has to be 1 always, hence we only shuffle the rest
-		List<Integer> maskBits = new ArrayList<>();
+		final List<Integer> maskBits = new ArrayList<>();
 		int i = 0;
 		while (i < effectiveBits - 1) {
 			maskBits.add(1);
@@ -44,7 +44,7 @@ public final class MaskGenerator {
 		}
 		Collections.shuffle(maskBits, new Random(seed));
 
-		String mask = Stream.concat(Stream.of(1), maskBits.stream())
+		final String mask = Stream.concat(Stream.of(1), maskBits.stream())
 				.map(Object::toString)
 				.collect(Collectors.joining());
 
@@ -58,7 +58,7 @@ public final class MaskGenerator {
 	 *
 	 * @return The generated mask
 	 */
-	private static long generateMaskNlfiedlerRust(int bits) {
+	private static long generateMaskNlfiedlerRust(final int bits) {
 		return Long.parseLong("1".repeat(bits), 2);
 	}
 
@@ -69,7 +69,7 @@ public final class MaskGenerator {
 	 *
 	 * @return The amount of effective bits to use
 	 */
-	private static int getEffectiveBits(int expectedChunkSize) {
+	private static int getEffectiveBits(final int expectedChunkSize) {
 		return Util.log2(expectedChunkSize);
 	}
 
@@ -131,11 +131,11 @@ public final class MaskGenerator {
 	 *
 	 * @return The generated mask
 	 */
-	private long generateMask(int effectiveBitOffset) {
-		int effectiveBits = getEffectiveBits(expectedChunkSize) + effectiveBitOffset;
+	private long generateMask(final int effectiveBitOffset) {
+		final int effectiveBits = MaskGenerator.getEffectiveBits(expectedChunkSize) + effectiveBitOffset;
 		return switch (maskOption) {
-			case FAST_CDC -> generateMaskFastCdc(effectiveBits, seed);
-			case NLFIEDLER_RUST -> generateMaskNlfiedlerRust(effectiveBits);
+			case FAST_CDC -> MaskGenerator.generateMaskFastCdc(effectiveBits, seed);
+			case NLFIEDLER_RUST -> MaskGenerator.generateMaskNlfiedlerRust(effectiveBits);
 		};
 	}
 }

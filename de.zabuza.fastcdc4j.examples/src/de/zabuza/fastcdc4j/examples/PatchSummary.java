@@ -83,66 +83,67 @@ final class PatchSummary {
 						currentBuild));
 	}
 
-	private static String bytesToReadable(long bytes) {
+	private static String bytesToReadable(final long bytes) {
 		if (bytes < 1_000) {
 			return bytes + " B";
 		}
 
-		double kiloBytes = bytes / 1_000.0;
+		final double kiloBytes = bytes / 1_000.0;
 		if (kiloBytes < 1_000) {
 			return String.format("%.2f", kiloBytes) + " KB";
 		}
 
-		double megaBytes = kiloBytes / 1_000.0;
+		final double megaBytes = kiloBytes / 1_000.0;
 		if (megaBytes < 1_000) {
 			return String.format("%.2f", megaBytes) + " MB";
 		}
 
-		double gigaBytes = megaBytes / 1_000.0;
+		final double gigaBytes = megaBytes / 1_000.0;
 		if (gigaBytes < 1_000) {
 			return String.format("%.2f", gigaBytes) + " GB";
 		}
 		return "";
 	}
 
-	private static void chunkPath(final Chunker chunker, final Path path, final Consumer<Chunk> chunkAction) {
+	private static void chunkPath(final Chunker chunker, final Path path, final Consumer<? super Chunk> chunkAction) {
 		try {
-			List<Path> files = Files.walk(path)
+			final List<Path> files = Files.walk(path)
 					.filter(Files::isRegularFile)
 					.collect(Collectors.toList());
 
-			long totalBytes = files.stream()
+			final long totalBytes = files.stream()
 					.mapToLong(file -> {
 						try {
 							return Files.size(file);
-						} catch (IOException e) {
+						} catch (final IOException e) {
 							throw new UncheckedIOException(e);
 						}
 					})
 					.sum();
-			AtomicLong processedBytesTotal = new AtomicLong(0);
-			AtomicLong processedBytesSincePrint = new AtomicLong(0);
-			AtomicLong timeStart = new AtomicLong(System.nanoTime());
-			ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+			final AtomicLong processedBytesTotal = new AtomicLong(0);
+			final AtomicLong processedBytesSincePrint = new AtomicLong(0);
+			final AtomicLong timeStart = new AtomicLong(System.nanoTime());
+			final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 			final long nanosPerSecond = 1_000_000_000L;
-			Runnable statPrinter = () -> {
-				AtomicLong timeEnd = new AtomicLong(System.nanoTime());
-				long timeDiff = timeEnd.get() - timeStart.get();
+			final Runnable statPrinter = () -> {
+				final AtomicLong timeEnd = new AtomicLong(System.nanoTime());
+				final long timeDiff = timeEnd.get() - timeStart.get();
 				if (timeDiff < nanosPerSecond) {
 					return;
 				}
 				timeStart.set(timeEnd.get());
-				long bytesPerSecond = processedBytesSincePrint.get() / (timeDiff / nanosPerSecond);
-				long bytesLeft = totalBytes - processedBytesTotal.get();
-				long secondsLeft = bytesLeft / (bytesPerSecond == 0 ? 1 : bytesPerSecond);
+				final long bytesPerSecond = processedBytesSincePrint.get() / (timeDiff / nanosPerSecond);
+				final long bytesLeft = totalBytes - processedBytesTotal.get();
+				final long secondsLeft = bytesLeft / (bytesPerSecond == 0 ? 1 : bytesPerSecond);
 
-				System.out.printf("\t%12s/s, %12s ETC, %12s processed, %12s total\r", bytesToReadable(bytesPerSecond),
-						secondsToReadable(secondsLeft), bytesToReadable(processedBytesTotal.get()),
-						bytesToReadable(totalBytes));
+				System.out.printf("\t%12s/s, %12s ETC, %12s processed, %12s total\r",
+						PatchSummary.bytesToReadable(bytesPerSecond), PatchSummary.secondsToReadable(secondsLeft),
+						PatchSummary.bytesToReadable(processedBytesTotal.get()),
+						PatchSummary.bytesToReadable(totalBytes));
 
 				processedBytesSincePrint.set(0);
 			};
-			var statPrintTask = service.scheduleAtFixedRate(statPrinter, 0, 1, TimeUnit.SECONDS);
+			final var statPrintTask = service.scheduleAtFixedRate(statPrinter, 0, 1, TimeUnit.SECONDS);
 
 			files.parallelStream()
 					.filter(Files::isRegularFile)
@@ -155,7 +156,7 @@ final class PatchSummary {
 					}));
 			statPrintTask.cancel(false);
 			service.shutdown();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
@@ -163,30 +164,32 @@ final class PatchSummary {
 	private static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
 			final Path currentBuild) {
 		final List<ChunkMetadata> previousChunks = Collections.synchronizedList(new ArrayList<>());
-		chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
+		PatchSummary.chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
 
 		final List<ChunkMetadata> currentChunks = Collections.synchronizedList(new ArrayList<>());
-		chunkPath(chunker, currentBuild, chunk -> currentChunks.add(chunk.toChunkMetadata()));
+		PatchSummary.chunkPath(chunker, currentBuild, chunk -> currentChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
 		final PatchSummary summary = new PatchSummary(previousBuildSummary, currentBuildSummary);
 		System.out.println("==== " + description);
 		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary previous:", bytesToReadable(previousBuildSummary.getTotalSize()),
-				previousBuildSummary.getTotalChunksCount(), bytesToReadable(previousBuildSummary.getTotalUniqueSize()),
+				"Build summary previous:", PatchSummary.bytesToReadable(previousBuildSummary.getTotalSize()),
+				previousBuildSummary.getTotalChunksCount(),
+				PatchSummary.bytesToReadable(previousBuildSummary.getTotalUniqueSize()),
 				previousBuildSummary.getUniqueChunksCount());
 		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary current:", bytesToReadable(currentBuildSummary.getTotalSize()),
-				currentBuildSummary.getTotalChunksCount(), bytesToReadable(currentBuildSummary.getTotalUniqueSize()),
+				"Build summary current:", PatchSummary.bytesToReadable(currentBuildSummary.getTotalSize()),
+				currentBuildSummary.getTotalChunksCount(),
+				PatchSummary.bytesToReadable(currentBuildSummary.getTotalUniqueSize()),
 				currentBuildSummary.getUniqueChunksCount());
 		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics previous:",
-				bytesToReadable(previousBuildSummary.getAverageChunkSize()),
+				PatchSummary.bytesToReadable(previousBuildSummary.getAverageChunkSize()),
 				previousBuildSummary.getDeduplicationRatio());
 		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics current:",
-				bytesToReadable(currentBuildSummary.getAverageChunkSize()),
+				PatchSummary.bytesToReadable(currentBuildSummary.getAverageChunkSize()),
 				currentBuildSummary.getDeduplicationRatio());
-		System.out.printf("%-25s %12s%n", "Patch size:", bytesToReadable(summary.getPatchSize()));
+		System.out.printf("%-25s %12s%n", "Patch size:", PatchSummary.bytesToReadable(summary.getPatchSize()));
 		System.out.printf("%-25s %12d%n", "Chunks to add:", summary.getChunksToAdd()
 				.size());
 		System.out.printf("%-25s %12d%n", "Chunks to remove:", summary.getChunksToRemove()
@@ -198,26 +201,26 @@ final class PatchSummary {
 		System.out.println();
 	}
 
-	private static String secondsToReadable(long seconds) {
-		StringBuilder sb = new StringBuilder();
+	private static String secondsToReadable(final long seconds) {
+		final StringBuilder sb = new StringBuilder();
 		boolean entered = false;
-		Duration time = Duration.ofSeconds(seconds);
+		final Duration time = Duration.ofSeconds(seconds);
 
-		long days = time.toDays();
+		final long days = time.toDays();
 		if (days != 0) {
 			sb.append(days)
 					.append("d ");
 			entered = true;
 		}
 
-		int hours = time.toHoursPart();
+		final int hours = time.toHoursPart();
 		if (hours != 0 || entered) {
 			sb.append(hours)
 					.append("h ");
 			entered = true;
 		}
 
-		int minutes = time.toMinutesPart();
+		final int minutes = time.toMinutesPart();
 		if (minutes != 0 || entered) {
 			sb.append(minutes)
 					.append("m ");
