@@ -20,7 +20,7 @@ import java.security.NoSuchAlgorithmException;
  * {@link #setChunkerOption(ChunkerOption)} can be used to choose from the predefined algorithms.
  * <p>
  * The algorithms will try to strive for an expected chunk size given by {@link #setExpectedChunkSize(int)},
- * a minimal chunk size given by {@link #setMinimalChunkSize(int)} and a maximal chunk size given by {@link #setMaximalChunkSize(int)}.
+ * a minimal chunk size given by {@link #setMinimalChunkSizeFactor(double)} and a maximal chunk size given by {@link #setMaximalChunkSizeFactor(double)}.
  * <p>
  * Most of the algorithms internally use a hash table as source for predicted noise to steer the algorithm, a custom
  * table can be provided by {@link #setHashTable(long[])}.
@@ -44,8 +44,8 @@ import java.security.NoSuchAlgorithmException;
  * <ul>
  *     <li>Chunker option: {@link ChunkerOption#FAST_CDC}</li>
  *     <li>Expected size: {@code 8 * 1024}</li>
- *     <li>Minimal size: {@code 2 * 1024}</li>
- *     <li>Maximal size: {@code 64 * 1024}</li>
+ *     <li>Minimal size factor: {@code 0.25}</li>
+ *     <li>Maximal size factor: {@code 8}</li>
  *     <li>Hash table option: {@link HashTableOption#RTPAL}</li>
  *     <li>Mask generation seed: {@code 941568351}</li>
  *     <li>Mask option: {@link MaskOption#FAST_CDC}</li>
@@ -128,15 +128,13 @@ public final class ChunkerBuilder {
 	 */
 	private Long maskSmall;
 	/**
-	 * The expected size of chunks, in bytes.
+	 * The factor to apply to the expected chunk size to receive the maximal chunk size.
 	 */
-	private int maximalChunkSize =
-			(int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
+	private double maximalChunkSizeFactor = ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR;
 	/**
-	 * The expected size of chunks, in bytes.
+	 * The factor to apply to the expected chunk size to receive the minimal chunk size.
 	 */
-	private int minimalChunkSize =
-			(int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
+	private double minimalChunkSizeFactor = ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR;
 	/**
 	 * The normalization level to use for choosing the masks in certain chunkers.
 	 */
@@ -164,6 +162,9 @@ public final class ChunkerBuilder {
 		long maskSmallToUse = maskSmall != null ? maskSmall : maskGenerator.generateSmallMask();
 		long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
 
+		int minimalChunkSize = (int) (expectedChunkSize * minimalChunkSizeFactor);
+		int maximalChunkSize = (int) (expectedChunkSize * maximalChunkSizeFactor);
+
 		final IterativeStreamChunkerCore coreToUse = chunkerCore != null ? chunkerCore : switch (chunkerOption) {
 			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, minimalChunkSize, maximalChunkSize,
 					hashTableToUse, maskSmallToUse, maskLargeToUse);
@@ -183,8 +184,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.FAST_CDC;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
-		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
-		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
+		minimalChunkSizeFactor = ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR;
+		maximalChunkSizeFactor = ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR;
 		hashTableOption = HashTableOption.RTPAL;
 		normalizationLevel = 2;
 		maskOption = MaskOption.FAST_CDC;
@@ -201,8 +202,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.FIXED_SIZE_CHUNKING;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
-		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
-		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
+		minimalChunkSizeFactor = ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR;
+		maximalChunkSizeFactor = ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR;
 		return this;
 	}
 
@@ -215,8 +216,8 @@ public final class ChunkerBuilder {
 		chunkerOption = ChunkerOption.NLFIEDLER_RUST;
 		hashMethod = ChunkerBuilder.DEFAULT_HASH_METHOD;
 		expectedChunkSize = ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE;
-		minimalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR);
-		maximalChunkSize = (int) (ChunkerBuilder.DEFAULT_EXPECTED_CHUNK_SIZE * ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR);
+		minimalChunkSizeFactor = ChunkerBuilder.DEFAULT_MIN_SIZE_FACTOR;
+		maximalChunkSizeFactor = ChunkerBuilder.DEFAULT_MAX_SIZE_FACTOR;
 		hashTableOption = HashTableOption.NLFIEDLER_RUST;
 		normalizationLevel = 1;
 		maskOption = MaskOption.NLFIEDLER_RUST;
@@ -373,32 +374,26 @@ public final class ChunkerBuilder {
 	}
 
 	/**
-	 * Sets the maximal size of chunks, in bytes.
+	 * Sets the factor to apply to the expected chunk size to receive the maximal chunk size.
 	 *
-	 * @param maximalChunkSize The maximal size of chunks, in bytes. Must be positive.
+	 * @param maximalChunkSizeFactor The factor to apply
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder setMaximalChunkSize(final int maximalChunkSize) {
-		if (maximalChunkSize < 0) {
-			throw new IllegalArgumentException("Maximal chunk size must be positive, was: " + maximalChunkSize);
-		}
-		this.maximalChunkSize = maximalChunkSize;
+	public ChunkerBuilder setMaximalChunkSizeFactor(final double maximalChunkSizeFactor) {
+		this.maximalChunkSizeFactor = maximalChunkSizeFactor;
 		return this;
 	}
 
 	/**
-	 * Sets the minimal size of chunks, in bytes.
+	 * Sets the factor to apply to the expected chunk size to receive the minimal chunk size.
 	 *
-	 * @param minimalChunkSize The minimal size of chunks, in bytes. Must be positive.
+	 * @param minimalChunkSizeFactor The factor to apply
 	 *
 	 * @return This builder instance
 	 */
-	public ChunkerBuilder setMinimalChunkSize(final int minimalChunkSize) {
-		if (minimalChunkSize < 0) {
-			throw new IllegalArgumentException("Minimal chunk size must be positive, was: " + minimalChunkSize);
-		}
-		this.minimalChunkSize = minimalChunkSize;
+	public ChunkerBuilder setMinimalChunkSizeFactor(final double minimalChunkSizeFactor) {
+		this.minimalChunkSizeFactor = minimalChunkSizeFactor;
 		return this;
 	}
 
