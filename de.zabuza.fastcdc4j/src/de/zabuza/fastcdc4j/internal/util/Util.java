@@ -15,6 +15,11 @@ public enum Util {
 	 * All characters available in the hexadecimal-system, as UTF-8 encoded array.
 	 */
 	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
+	/**
+	 * Small delta to counter floating point issues when rounding down would accidentally round down a full integer to
+	 * much.
+	 */
+	private static final double FLOATING_DELTA = 1.0e-12;
 
 	/**
 	 * Creates a hexadecimal representation of the given binary data.
@@ -63,14 +68,14 @@ public enum Util {
 	 *
 	 * @return The log2 of the given value
 	 */
-	public static int log2(int x) {
+	public static int log2(final int x) {
 		if (x >= 0) {
 			// Safe binary-only conversion without floating points
 			return Integer.bitCount(Integer.highestOneBit(x) - 1);
 		}
 		// Adding epsilon to mitigate floating point errors, see https://stackoverflow.com/a/3305400/2411243
-		return (int) (Math.log(x) / Math.log(2) + 1e-12);
-
+		//noinspection NumericCastThatLosesPrecision
+		return (int) (Math.log(x) / Math.log(2) + Util.FLOATING_DELTA);
 
 	}
 }

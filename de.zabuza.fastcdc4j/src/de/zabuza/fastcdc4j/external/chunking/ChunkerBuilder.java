@@ -57,6 +57,7 @@ import java.security.NoSuchAlgorithmException;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
+@SuppressWarnings("ClassWithTooManyFields")
 public final class ChunkerBuilder {
 	/**
 	 * The default expected size of chunks, in bytes, used by all chunkers.
@@ -159,11 +160,13 @@ public final class ChunkerBuilder {
 
 		final MaskGenerator maskGenerator =
 				new MaskGenerator(maskOption, normalizationLevel, expectedChunkSize, maskGenerationSeed);
-		long maskSmallToUse = maskSmall != null ? maskSmall : maskGenerator.generateSmallMask();
-		long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
+		final long maskSmallToUse = maskSmall != null ? maskSmall : maskGenerator.generateSmallMask();
+		final long maskLargeToUse = maskLarge != null ? maskLarge : maskGenerator.generateLargeMask();
 
-		int minimalChunkSize = (int) (expectedChunkSize * minimalChunkSizeFactor);
-		int maximalChunkSize = (int) (expectedChunkSize * maximalChunkSizeFactor);
+		//noinspection NumericCastThatLosesPrecision
+		final int minimalChunkSize = (int) (expectedChunkSize * minimalChunkSizeFactor);
+		//noinspection NumericCastThatLosesPrecision
+		final int maximalChunkSize = (int) (expectedChunkSize * maximalChunkSizeFactor);
 
 		final IterativeStreamChunkerCore coreToUse = chunkerCore != null ? chunkerCore : switch (chunkerOption) {
 			case FAST_CDC -> new FastCdcChunkerCore(expectedChunkSize, minimalChunkSize, maximalChunkSize,

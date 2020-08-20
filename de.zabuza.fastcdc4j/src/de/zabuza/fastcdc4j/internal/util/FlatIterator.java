@@ -12,6 +12,8 @@ import java.util.function.Function;
  * @param <X> The type contained in the outer iterator, either already an iterator or used to produce iterators using a
  *            given function
  * @param <Y> The type contained in the inner iterators, also the final type contained in this iterator
+ *
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class FlatIterator<X, Y> implements Iterator<Y> {
 	/**
