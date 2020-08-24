@@ -34,6 +34,7 @@ final class PatchBenchmark {
 				.filter(Files::isDirectory)
 				.map(Path::getFileName)
 				.map(Path::toString)
+				.sorted()
 				.collect(Collectors.toList());
 
 		List<Map.Entry<String, String>> buildsToCompare = new ArrayList<>();
