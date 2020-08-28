@@ -12,7 +12,7 @@ import java.nio.file.Path;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-@SuppressWarnings({"UseOfSystemOutOrSystemErr", "ClassIndependentOfModule", "ClassOnlyUsedInOneModule"})
+@SuppressWarnings({ "UseOfSystemOutOrSystemErr", "ClassIndependentOfModule", "ClassOnlyUsedInOneModule" })
 enum LocalChunkCache {
 	;
 
@@ -20,6 +20,8 @@ enum LocalChunkCache {
 	 * Starts the application.
 	 *
 	 * @param args Two arguments, the path to the build and the path to the local chunk cache
+	 *
+	 * @throws IOException If an IOException occurred
 	 */
 	public static void main(final String[] args) throws IOException {
 		if (args.length != 2) {

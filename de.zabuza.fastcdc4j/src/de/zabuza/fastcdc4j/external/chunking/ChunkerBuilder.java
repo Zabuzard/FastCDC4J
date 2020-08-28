@@ -1,9 +1,11 @@
 package de.zabuza.fastcdc4j.external.chunking;
 
 import de.zabuza.fastcdc4j.internal.chunking.*;
+import de.zabuza.fastcdc4j.internal.util.Validations;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 /**
  * Builder for convenient construction of {@link Chunker} instances.
@@ -147,7 +149,6 @@ public final class ChunkerBuilder {
 	 * @return A chunker using the set properties
 	 */
 	public Chunker build() {
-		// TODO Add argument validation to all code
 		// TODO Maybe add Adler and Rabin CDC alternatives
 		if (chunker != null) {
 			return chunker;
@@ -236,7 +237,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setChunker(final Chunker chunker) {
-		this.chunker = chunker;
+		this.chunker = Objects.requireNonNull(chunker);
 		return this;
 	}
 
@@ -249,7 +250,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setChunkerCore(final IterativeStreamChunkerCore chunkerCore) {
-		this.chunkerCore = chunkerCore;
+		this.chunkerCore = Objects.requireNonNull(chunkerCore);
 		return this;
 	}
 
@@ -261,7 +262,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setChunkerOption(final ChunkerOption chunkerOption) {
-		this.chunkerOption = chunkerOption;
+		this.chunkerOption = Objects.requireNonNull(chunkerOption);
 		return this;
 	}
 
@@ -273,10 +274,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setExpectedChunkSize(final int expectedChunkSize) {
-		if (expectedChunkSize < 0) {
-			throw new IllegalArgumentException("Expected chunk size must be positive, was: " + expectedChunkSize);
-		}
-		this.expectedChunkSize = expectedChunkSize;
+		this.expectedChunkSize = Validations.requirePositiveNonZero(expectedChunkSize, "Expected chunk size");
 		return this;
 	}
 
@@ -289,6 +287,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setHashMethod(final String hashMethod) {
+		Objects.requireNonNull(hashMethod);
 		try {
 			MessageDigest.getInstance(hashMethod);
 		} catch (final NoSuchAlgorithmException e) {
@@ -307,11 +306,10 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setHashTable(final long[] hashTable) {
+		Objects.requireNonNull(hashTable);
 		//noinspection MagicNumber
-		if (hashTable.length != 256) {
-			throw new IllegalArgumentException(
-					"Hash table must have a length of 256, one hash per byte value, was: " + hashTable.length);
-		}
+		Validations.require(hashTable.length == 256,
+				"Hash table must have a length of 256, one hash per byte value, was: " + hashTable.length);
 		this.hashTable = hashTable.clone();
 		return this;
 	}
@@ -324,7 +322,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setHashTableOption(final HashTableOption hashTableOption) {
-		this.hashTableOption = hashTableOption;
+		this.hashTableOption = Objects.requireNonNull(hashTableOption);
 		return this;
 	}
 
@@ -360,7 +358,7 @@ public final class ChunkerBuilder {
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setMaskOption(final MaskOption maskOption) {
-		this.maskOption = maskOption;
+		this.maskOption = Objects.requireNonNull(maskOption);
 		return this;
 	}
 
@@ -379,11 +377,12 @@ public final class ChunkerBuilder {
 	/**
 	 * Sets the factor to apply to the expected chunk size to receive the maximal chunk size.
 	 *
-	 * @param maximalChunkSizeFactor The factor to apply
+	 * @param maximalChunkSizeFactor The factor to apply, must be greater equals 1.0
 	 *
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setMaximalChunkSizeFactor(final double maximalChunkSizeFactor) {
+		Validations.require(maximalChunkSizeFactor >= 1.0, "Maximal chunk size factor must be greater equals 1.0");
 		this.maximalChunkSizeFactor = maximalChunkSizeFactor;
 		return this;
 	}
@@ -391,11 +390,12 @@ public final class ChunkerBuilder {
 	/**
 	 * Sets the factor to apply to the expected chunk size to receive the minimal chunk size.
 	 *
-	 * @param minimalChunkSizeFactor The factor to apply
+	 * @param minimalChunkSizeFactor The factor to apply, must be smaller equals 1.0
 	 *
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setMinimalChunkSizeFactor(final double minimalChunkSizeFactor) {
+		Validations.require(minimalChunkSizeFactor <= 1.0, "Minimal chunk size factor must be smaller equals 1.0");
 		this.minimalChunkSizeFactor = minimalChunkSizeFactor;
 		return this;
 	}
@@ -403,12 +403,13 @@ public final class ChunkerBuilder {
 	/**
 	 * Sets the normalization level used for choosing the masks in certain chunkers.
 	 *
-	 * @param normalizationLevel The normalization level to use for choosing the masks in certain chunkers.
+	 * @param normalizationLevel The normalization level to use for choosing the masks in certain chunkers, must be
+	 *                           positive.
 	 *
 	 * @return This builder instance
 	 */
 	public ChunkerBuilder setNormalizationLevel(final int normalizationLevel) {
-		this.normalizationLevel = normalizationLevel;
+		this.normalizationLevel = Validations.requirePositive(normalizationLevel, "Normalization level");
 		return this;
 	}
 }

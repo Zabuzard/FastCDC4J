@@ -4,10 +4,14 @@ import de.zabuza.fastcdc4j.external.chunking.Chunk;
 import de.zabuza.fastcdc4j.external.chunking.Chunker;
 import de.zabuza.fastcdc4j.external.chunking.IterativeStreamChunkerCore;
 import de.zabuza.fastcdc4j.internal.util.Util;
+import de.zabuza.fastcdc4j.internal.util.Validations;
 
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 
 /**
  * Implementation of a chunker that iteratively chunks the stream by using a given {@link IterativeStreamChunkerCore} as
@@ -28,17 +32,26 @@ public final class IterativeStreamChunker implements Chunker {
 	/**
 	 * Creates a new chunker.
 	 *
-	 * @param core       The core to use for chunking.
+	 * @param core       The core to use for chunking, not null
 	 * @param hashMethod The hash method to use for hashing the data of a chunk, has to be supported and accepted by
 	 *                   {@link java.security.MessageDigest}
 	 */
 	public IterativeStreamChunker(final IterativeStreamChunkerCore core, final String hashMethod) {
-		this.core = core;
+		Objects.requireNonNull(hashMethod);
+		try {
+			MessageDigest.getInstance(hashMethod);
+		} catch (final NoSuchAlgorithmException e) {
+			throw new IllegalArgumentException("The given hash method is not supported, was: " + hashMethod, e);
+		}
+
+		this.core = Objects.requireNonNull(core);
 		this.hashMethod = hashMethod;
 	}
 
 	@Override
 	public Iterable<Chunk> chunk(final InputStream stream, final long size) {
+		Objects.requireNonNull(stream);
+		Validations.requirePositiveNonZero(size, "Size");
 		return () -> new ChunkerIterator(stream, size, core, hashMethod);
 	}
 
@@ -70,18 +83,25 @@ public final class IterativeStreamChunker implements Chunker {
 		private long currentOffset;
 
 		/**
-		 * @param stream     The data stream to chunk
+		 * @param stream     The data stream to chunk, not null
 		 * @param size       The amount of bytes available in the stream that are subject to be chunked, the stream must
-		 *                   offer at least that many bytes
-		 * @param core       The core to use for chunking.
+		 *                   offer at least that many bytes, positive and not zero
+		 * @param core       The core to use for chunking, not null
 		 * @param hashMethod The hash method to use for hashing the data of a chunk, has to be supported and accepted by
 		 *                   {@link java.security.MessageDigest}
 		 */
 		private ChunkerIterator(final InputStream stream, final long size, final IterativeStreamChunkerCore core,
 				final String hashMethod) {
-			this.stream = stream;
-			this.size = size;
-			this.core = core;
+			Objects.requireNonNull(hashMethod);
+			try {
+				MessageDigest.getInstance(hashMethod);
+			} catch (final NoSuchAlgorithmException e) {
+				throw new IllegalArgumentException("The given hash method is not supported, was: " + hashMethod, e);
+			}
+
+			this.stream = Objects.requireNonNull(stream);
+			this.size = Validations.requirePositiveNonZero(size, "Size");
+			this.core = Objects.requireNonNull(core);
 			this.hashMethod = hashMethod;
 		}
 

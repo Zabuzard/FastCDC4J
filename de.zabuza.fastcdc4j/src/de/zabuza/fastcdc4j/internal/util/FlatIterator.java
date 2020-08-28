@@ -2,6 +2,7 @@ package de.zabuza.fastcdc4j.internal.util;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -32,13 +33,14 @@ public final class FlatIterator<X, Y> implements Iterator<Y> {
 	/**
 	 * Creates a new flat iterator that flattens the given iterator on-the-fly.
 	 *
-	 * @param outerIterator The source iterator used to generate inner iterators from
-	 * @param provider      Function that provides the final inner iterators based on the outer iterators data
+	 * @param outerIterator The source iterator used to generate inner iterators from, not null
+	 * @param provider      Function that provides the final inner iterators based on the outer iterators data, not
+	 *                      null
 	 */
 	public FlatIterator(final Iterator<? extends X> outerIterator,
 			final Function<? super X, ? extends Iterator<Y>> provider) {
-		this.outerIterator = outerIterator;
-		this.provider = provider;
+		this.outerIterator = Objects.requireNonNull(outerIterator);
+		this.provider = Objects.requireNonNull(provider);
 	}
 
 	@Override

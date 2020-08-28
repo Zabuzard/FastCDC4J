@@ -26,7 +26,7 @@ import java.util.stream.Stream;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
+@SuppressWarnings({ "UseOfSystemOutOrSystemErr", "MagicNumber" })
 final class PatchSummary {
 	/**
 	 * Starts the application.
@@ -104,41 +104,41 @@ final class PatchSummary {
 
 	static PatchSummary computePatchSummary(final Chunker chunker, final Path previousBuild, final Path currentBuild) {
 		final List<ChunkMetadata> previousChunks = Collections.synchronizedList(new ArrayList<>());
-		chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
+		PatchSummary.chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
 
 		final List<ChunkMetadata> currentChunks = Collections.synchronizedList(new ArrayList<>());
-		chunkPath(chunker, currentBuild, chunk -> currentChunks.add(chunk.toChunkMetadata()));
+		PatchSummary.chunkPath(chunker, currentBuild, chunk -> currentChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
 		return new PatchSummary(previousBuildSummary, currentBuildSummary);
 	}
 
-	static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
+	private static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
 			final Path currentBuild) {
-		final PatchSummary summary = computePatchSummary(chunker, previousBuild, currentBuild);
+		final PatchSummary summary = PatchSummary.computePatchSummary(chunker, previousBuild, currentBuild);
 		System.out.println("==== " + description);
 		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary previous:", bytesToReadable(summary.getPreviousBuildSummary()
+				"Build summary previous:", PatchSummary.bytesToReadable(summary.getPreviousBuildSummary()
 						.getTotalSize()), summary.getPreviousBuildSummary()
-						.getTotalChunksCount(), bytesToReadable(summary.getPreviousBuildSummary()
+						.getTotalChunksCount(), PatchSummary.bytesToReadable(summary.getPreviousBuildSummary()
 						.getTotalUniqueSize()), summary.getPreviousBuildSummary()
 						.getUniqueChunksCount());
 		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary current:", bytesToReadable(summary.getCurrentBuildSummary()
+				"Build summary current:", PatchSummary.bytesToReadable(summary.getCurrentBuildSummary()
 						.getTotalSize()), summary.getCurrentBuildSummary()
-						.getTotalChunksCount(), bytesToReadable(summary.getCurrentBuildSummary()
+						.getTotalChunksCount(), PatchSummary.bytesToReadable(summary.getCurrentBuildSummary()
 						.getTotalUniqueSize()), summary.getCurrentBuildSummary()
 						.getUniqueChunksCount());
 		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics previous:",
-				bytesToReadable(summary.getPreviousBuildSummary()
+				PatchSummary.bytesToReadable(summary.getPreviousBuildSummary()
 						.getAverageChunkSize()), summary.getPreviousBuildSummary()
 						.getDeduplicationRatio());
 		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics current:",
-				bytesToReadable(summary.getCurrentBuildSummary()
+				PatchSummary.bytesToReadable(summary.getCurrentBuildSummary()
 						.getAverageChunkSize()), summary.getCurrentBuildSummary()
 						.getDeduplicationRatio());
-		System.out.printf("%-25s %12s%n", "Patch size:", bytesToReadable(summary.getPatchSize()));
+		System.out.printf("%-25s %12s%n", "Patch size:", PatchSummary.bytesToReadable(summary.getPatchSize()));
 		System.out.printf("%-25s %12d%n", "Chunks to add:", summary.getChunksToAdd()
 				.size());
 		System.out.printf("%-25s %12d%n", "Chunks to remove:", summary.getChunksToRemove()
@@ -150,66 +150,71 @@ final class PatchSummary {
 		System.out.println();
 	}
 
-	private static String bytesToReadable(long bytes) {
+	private static String bytesToReadable(final long bytes) {
 		if (bytes < 1_000) {
 			return bytes + " B";
 		}
 
-		double kiloBytes = bytes / 1_000.0;
+		final double kiloBytes = bytes / 1_000.0;
 		if (kiloBytes < 1_000) {
 			return String.format("%.2f", kiloBytes) + " KB";
 		}
 
-		double megaBytes = kiloBytes / 1_000.0;
+		final double megaBytes = kiloBytes / 1_000.0;
 		if (megaBytes < 1_000) {
 			return String.format("%.2f", megaBytes) + " MB";
 		}
 
-		double gigaBytes = megaBytes / 1_000.0;
+		final double gigaBytes = megaBytes / 1_000.0;
 		if (gigaBytes < 1_000) {
 			return String.format("%.2f", gigaBytes) + " GB";
 		}
 		return "";
 	}
 
-	private static void chunkPath(final Chunker chunker, final Path path, final Consumer<Chunk> chunkAction) {
+	private static void chunkPath(final Chunker chunker, final Path path, final Consumer<? super Chunk> chunkAction) {
 		try {
-			List<Path> files = Files.walk(path)
-					.filter(Files::isRegularFile)
-					.collect(Collectors.toList());
+			final List<Path> files;
+			//noinspection NestedTryStatement
+			try (final Stream<Path> stream = Files.walk(path)) {
+				files = stream.filter(Files::isRegularFile)
+						.collect(Collectors.toList());
+			}
 
-			long totalBytes = files.stream()
+			final long totalBytes = files.stream()
 					.mapToLong(file -> {
 						try {
 							return Files.size(file);
-						} catch (IOException e) {
+						} catch (final IOException e) {
 							throw new UncheckedIOException(e);
 						}
 					})
 					.sum();
-			AtomicLong processedBytesTotal = new AtomicLong(0);
-			AtomicLong processedBytesSincePrint = new AtomicLong(0);
-			AtomicLong timeStart = new AtomicLong(System.nanoTime());
-			ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+			final AtomicLong processedBytesTotal = new AtomicLong(0);
+			final AtomicLong processedBytesSincePrint = new AtomicLong(0);
+			final AtomicLong timeStart = new AtomicLong(System.nanoTime());
+			final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 			final long nanosPerSecond = 1_000_000_000L;
-			Runnable statPrinter = () -> {
-				AtomicLong timeEnd = new AtomicLong(System.nanoTime());
-				long timeDiff = timeEnd.get() - timeStart.get();
+			final Runnable statPrinter = () -> {
+				final AtomicLong timeEnd = new AtomicLong(System.nanoTime());
+				final long timeDiff = timeEnd.get() - timeStart.get();
 				if (timeDiff < nanosPerSecond) {
 					return;
 				}
 				timeStart.set(timeEnd.get());
-				long bytesPerSecond = processedBytesSincePrint.get() / (timeDiff / nanosPerSecond);
-				long bytesLeft = totalBytes - processedBytesTotal.get();
-				long secondsLeft = bytesLeft / (bytesPerSecond == 0 ? 1 : bytesPerSecond);
+				final long bytesPerSecond = processedBytesSincePrint.get() / (timeDiff / nanosPerSecond);
+				final long bytesLeft = totalBytes - processedBytesTotal.get();
+				final long secondsLeft = bytesLeft / (bytesPerSecond == 0 ? 1 : bytesPerSecond);
 
-				System.out.printf("\t%12s/s, %12s ETC, %12s processed, %12s total\r", bytesToReadable(bytesPerSecond),
-						secondsToReadable(secondsLeft), bytesToReadable(processedBytesTotal.get()),
-						bytesToReadable(totalBytes));
+				//noinspection HardcodedLineSeparator
+				System.out.printf("\t%12s/s, %12s ETC, %12s processed, %12s total\r",
+						PatchSummary.bytesToReadable(bytesPerSecond), PatchSummary.secondsToReadable(secondsLeft),
+						PatchSummary.bytesToReadable(processedBytesTotal.get()),
+						PatchSummary.bytesToReadable(totalBytes));
 
 				processedBytesSincePrint.set(0);
 			};
-			var statPrintTask = service.scheduleAtFixedRate(statPrinter, 0, 1, TimeUnit.SECONDS);
+			final var statPrintTask = service.scheduleAtFixedRate(statPrinter, 0, 1, TimeUnit.SECONDS);
 
 			files.parallelStream()
 					.filter(Files::isRegularFile)
@@ -222,31 +227,31 @@ final class PatchSummary {
 					}));
 			statPrintTask.cancel(false);
 			service.shutdown();
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new UncheckedIOException(e);
 		}
 	}
 
-	private static String secondsToReadable(long seconds) {
-		StringBuilder sb = new StringBuilder();
+	private static String secondsToReadable(final long seconds) {
+		final StringBuilder sb = new StringBuilder();
 		boolean entered = false;
-		Duration time = Duration.ofSeconds(seconds);
+		final Duration time = Duration.ofSeconds(seconds);
 
-		long days = time.toDays();
+		final long days = time.toDays();
 		if (days != 0) {
 			sb.append(days)
 					.append("d ");
 			entered = true;
 		}
 
-		int hours = time.toHoursPart();
+		final int hours = time.toHoursPart();
 		if (hours != 0 || entered) {
 			sb.append(hours)
 					.append("h ");
 			entered = true;
 		}
 
-		int minutes = time.toMinutesPart();
+		final int minutes = time.toMinutesPart();
 		if (minutes != 0 || entered) {
 			sb.append(minutes)
 					.append("m ");
@@ -333,7 +338,7 @@ final class PatchSummary {
 		private long totalUniqueSize;
 		private int uniqueChunksCount;
 
-		public BuildSummary(final Iterable<? extends ChunkMetadata> chunks) {
+		BuildSummary(final Iterable<? extends ChunkMetadata> chunks) {
 			chunks.forEach(chunk -> {
 				totalChunksCount++;
 				totalSize += chunk.getLength();
@@ -347,41 +352,41 @@ final class PatchSummary {
 			});
 		}
 
-		public boolean containsChunk(final ChunkMetadata chunk) {
-			return hashToChunk.containsKey(chunk.getHexHash());
-		}
-
-		public int getAverageChunkSize() {
-			//noinspection NumericCastThatLosesPrecision
-			return (int) (totalSize / totalChunksCount);
-		}
-
-		public ChunkMetadata getChunk(final String hash) {
-			return hashToChunk.get(hash);
-		}
-
-		public Stream<ChunkMetadata> getChunks() {
-			return hashToChunk.values()
-					.stream();
-		}
-
-		public double getDeduplicationRatio() {
-			return (double) totalUniqueSize / totalSize * 100;
-		}
-
-		public int getTotalChunksCount() {
-			return totalChunksCount;
-		}
-
 		public long getTotalSize() {
 			return totalSize;
 		}
 
-		public long getTotalUniqueSize() {
+		boolean containsChunk(final ChunkMetadata chunk) {
+			return hashToChunk.containsKey(chunk.getHexHash());
+		}
+
+		int getAverageChunkSize() {
+			//noinspection NumericCastThatLosesPrecision
+			return (int) (totalSize / totalChunksCount);
+		}
+
+		ChunkMetadata getChunk(final String hash) {
+			return hashToChunk.get(hash);
+		}
+
+		Stream<ChunkMetadata> getChunks() {
+			return hashToChunk.values()
+					.stream();
+		}
+
+		double getDeduplicationRatio() {
+			return (double) totalUniqueSize / totalSize * 100;
+		}
+
+		int getTotalChunksCount() {
+			return totalChunksCount;
+		}
+
+		long getTotalUniqueSize() {
 			return totalUniqueSize;
 		}
 
-		public int getUniqueChunksCount() {
+		int getUniqueChunksCount() {
 			return uniqueChunksCount;
 		}
 	}

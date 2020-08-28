@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class offering a {@link #main(String[])} method that compares builds in a given folder with each other and creates
@@ -16,12 +17,16 @@ import java.util.stream.Collectors;
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
-final class PatchBenchmark {
+@SuppressWarnings({ "UseOfSystemOutOrSystemErr", "MagicNumber" })
+enum PatchBenchmark {
+	;
+
 	/**
 	 * Starts the application.
 	 *
 	 * @param args One arguments, the path to the builds to benchmark.
+	 *
+	 * @throws IOException If an IOException occurred
 	 */
 	public static void main(final String[] args) throws IOException {
 		if (args.length != 1) {
@@ -29,31 +34,34 @@ final class PatchBenchmark {
 					"Expected one arguments denoting the path to the folder containing the builds to benchmark.");
 		}
 
-		Path basePath = Path.of(args[0]);
-		List<String> builds = Files.list(basePath)
-				.filter(Files::isDirectory)
-				.map(Path::getFileName)
-				.map(Path::toString)
-				.sorted()
-				.collect(Collectors.toList());
+		final Path basePath = Path.of(args[0]);
+		final List<String> builds;
+		try (final Stream<Path> stream = Files.list(basePath)) {
+			builds = stream.filter(Files::isDirectory)
+					.map(Path::getFileName)
+					.map(Path::toString)
+					.sorted()
+					.collect(Collectors.toList());
+		}
 
-		List<Map.Entry<String, String>> buildsToCompare = new ArrayList<>();
+		final List<Map.Entry<String, String>> buildsToCompare = new ArrayList<>();
 		for (int i = 0; i < builds.size() - 1; i++) {
-			String previous = builds.get(i);
-			String current = builds.get(i + 1);
+			final String previous = builds.get(i);
+			final String current = builds.get(i + 1);
 
 			buildsToCompare.add(Map.entry(previous, current));
 		}
 
 		System.out.printf("Comparing %d patch scenarios%n", buildsToCompare.size());
 
-		List<String> patchDataLines = new ArrayList<>();
+		final Collection<String> patchDataLines = new ArrayList<>();
 		patchDataLines.add("patch,name,fsc2mb,fastcdc2mb,fastcdc8kb");
 		//		patchDataLines.add("patch,name,rtpal262kb");
-		List<String> buildDataLines = new ArrayList<>();
+		final Collection<String> buildDataLines = new ArrayList<>();
 		buildDataLines.add("version,name,size");
 		int i = 1;
-		for (Map.Entry<String, String> comparison : buildsToCompare) {
+		for (final Map.Entry<String, String> comparison : buildsToCompare) {
+			//noinspection HardcodedFileSeparator
 			System.out.printf("====================== %d / %d patch scenarios ======================%n", i,
 					buildsToCompare.size());
 
@@ -76,11 +84,11 @@ final class PatchBenchmark {
 					comparison.getValue());
 			System.out.println();
 
-			List<Long> patchSizes = new ArrayList<>();
-			AtomicLong previousBuildSize = new AtomicLong();
-			AtomicLong currentBuildSize = new AtomicLong();
+			final Collection<Long> patchSizes = new ArrayList<>();
+			final AtomicLong previousBuildSize = new AtomicLong();
+			final AtomicLong currentBuildSize = new AtomicLong();
 			descriptionToChunker.forEach((description, chunker) -> {
-				PatchSummary summary = PatchSummary.computePatchSummary(chunker, previousBuild, currentBuild);
+				final PatchSummary summary = PatchSummary.computePatchSummary(chunker, previousBuild, currentBuild);
 
 				patchSizes.add(summary.getPatchSize());
 
@@ -90,16 +98,14 @@ final class PatchBenchmark {
 						.getTotalSize());
 			});
 
-			StringJoiner patchSizesJoiner = new StringJoiner(",");
+			final StringJoiner patchSizesJoiner = new StringJoiner(",");
 			patchSizesJoiner.add(String.valueOf(i + 1));
-			patchSizesJoiner.add(previousBuild.getFileName()
-					.toString() + "-" + currentBuild.getFileName()
-					.toString());
+			patchSizesJoiner.add(previousBuild.getFileName() + "-" + currentBuild.getFileName());
 			patchSizes.forEach(size -> patchSizesJoiner.add(String.valueOf(size)));
 			patchDataLines.add(patchSizesJoiner.toString());
 
 			if (i == 1) {
-				StringJoiner buildDataJoiner = new StringJoiner(",");
+				final StringJoiner buildDataJoiner = new StringJoiner(",");
 				buildDataJoiner.add("1");
 				buildDataJoiner.add(previousBuild.getFileName()
 						.toString());
@@ -107,7 +113,7 @@ final class PatchBenchmark {
 				buildDataLines.add(buildDataJoiner.toString());
 			}
 
-			StringJoiner buildDataJoiner = new StringJoiner(",");
+			final StringJoiner buildDataJoiner = new StringJoiner(",");
 			buildDataJoiner.add(String.valueOf(i + 1));
 			buildDataJoiner.add(currentBuild.getFileName()
 					.toString());
@@ -116,8 +122,8 @@ final class PatchBenchmark {
 
 			i++;
 
-			Path buildDataPath = Path.of("benchmark_build_data.csv");
-			Path patchDataPath = Path.of("benchmark_patch_data.csv");
+			final Path buildDataPath = Path.of("benchmark_build_data.csv");
+			final Path patchDataPath = Path.of("benchmark_patch_data.csv");
 			Files.write(buildDataPath, buildDataLines);
 			Files.write(patchDataPath, patchDataLines);
 			System.out.println("Updated benchmark build data: " + buildDataPath);

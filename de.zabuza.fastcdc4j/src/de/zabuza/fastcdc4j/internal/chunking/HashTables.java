@@ -13,7 +13,7 @@ public enum HashTables {
 	 */
 	@SuppressWarnings("OverlyLargePrimitiveArrayInitializer")
 	private static final long[] NLFIEDLER_RUST =
-			{0x5c95c078L, 0x22408989L, 0x2d48a214L, 0x12842087L, 0x530f8afbL, 0x474536b9L, 0x2963b4f1L, 0x44cb738bL,
+			{ 0x5c95c078L, 0x22408989L, 0x2d48a214L, 0x12842087L, 0x530f8afbL, 0x474536b9L, 0x2963b4f1L, 0x44cb738bL,
 					0x4ea7403dL, 0x4d606b6eL, 0x074ec5d3L, 0x3af39d18L, 0x726003caL, 0x37a62a74L, 0x51a2f58eL,
 					0x7506358eL, 0x5d4ab128L, 0x4d4ae17bL, 0x41e85924L, 0x470c36f7L, 0x4741cbe1L, 0x01bb7f30L,
 					0x617c1de3L, 0x2b0c3a1fL, 0x50c48f73L, 0x21a82d37L, 0x6095ace0L, 0x419167a0L, 0x3caf49b0L,
@@ -49,13 +49,13 @@ public enum HashTables {
 					0x0e93e12bL, 0x64b2791dL, 0x440d2476L, 0x588ea8ddL, 0x4665a658L, 0x7446c418L, 0x1877a774L,
 					0x5626407eL, 0x7f63bd46L, 0x32d2dbd8L, 0x3c790f4aL, 0x772b7239L, 0x6f8b2826L, 0x677ff609L,
 					0x0dc82c11L, 0x23ffe354L, 0x2eac53a6L, 0x16139e09L, 0x0afd0dbcL, 0x2a4d4237L, 0x56a368c7L,
-					0x234325e4L, 0x2dce9187L, 0x32e8ea7eL};
+					0x234325e4L, 0x2dce9187L, 0x32e8ea7eL };
 	/**
 	 * Table used by RTPal.
 	 */
 	@SuppressWarnings("OverlyLargePrimitiveArrayInitializer")
 	private static final long[] RTPAL =
-			{0x5a16b18f2aac863eL, 0x05fad735784f09eaL, 0x355c6a3868fe64afL, 0x57df89c95716c702L, 0x46ea7572135544a6L,
+			{ 0x5a16b18f2aac863eL, 0x05fad735784f09eaL, 0x355c6a3868fe64afL, 0x57df89c95716c702L, 0x46ea7572135544a6L,
 					0x6291d5376cd79d73L, 0x2a6e072b609b0bbfL, 0x110f7f895ec438b7L, 0x2fc580f60659f690L,
 					0x15ce33c924a8880bL, 0x1f3fabc44c091f5fL, 0x76e7512d0f53c142L, 0x30ff6d65448b44b3L,
 					0x16db576e7ecfe3c9L, 0x7009bea841de2e20L, 0x0ad460d80f3fe181L, 0x0a1e6fed6ece42dbL,
@@ -118,7 +118,7 @@ public enum HashTables {
 					0x45e90bc2494ad436L, 0x5291bcf62f0b6bdbL, 0x72ea193619f06853L, 0x5a5a2bd77114b311L,
 					0x5445faa82e02e158L, 0x0065712926726beaL, 0x1bed3b9a62fbf757L, 0x1767b815257b83d4L,
 					0x000eab4e77327b81L, 0x0fd333301966ff16L, 0x6780eb8339b83286L, 0x7652a5e647799673L,
-					0x43c0db665e364315L, 0x6fe4fe01606d405dL, 0x6833dbd876b03920L};
+					0x43c0db665e364315L, 0x6fe4fe01606d405dL, 0x6833dbd876b03920L };
 
 	/**
 	 * Gets the table used by Nlfiedler-Rust

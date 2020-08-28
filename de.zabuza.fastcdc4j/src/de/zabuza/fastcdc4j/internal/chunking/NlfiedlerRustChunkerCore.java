@@ -1,11 +1,13 @@
 package de.zabuza.fastcdc4j.internal.chunking;
 
 import de.zabuza.fastcdc4j.external.chunking.IterativeStreamChunkerCore;
+import de.zabuza.fastcdc4j.internal.util.Validations;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.Objects;
 
 /**
  * Implementation of an iterative stream chunker core that chunks according to a modified FastCDC algorithm (by Nathan
@@ -43,11 +45,13 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	/**
 	 * Creates a new core.
 	 *
-	 * @param expectedSize The expected size for a single chunk, in bytes
-	 * @param minSize      The minimal size for a single chunk, in bytes
-	 * @param maxSize      The maximal size for a single chunk, in bytes
+	 * @param expectedSize The expected size for a single chunk, in bytes, must be positive
+	 * @param minSize      The minimal size for a single chunk, in bytes, must be positive and less equals expected
+	 *                     size
+	 * @param maxSize      The maximal size for a single chunk, in bytes, must be positive and greater equals expected
+	 *                     size
 	 * @param gear         The hash table, also known as {@code gear} used as noise to improve the splitting behavior
-	 *                     for relatively similar content
+	 *                     for relatively similar content, must have a length of exactly 256, one hash per byte value
 	 * @param maskSmall    Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a
 	 *                     split
 	 * @param maskLarge    Mask for the fingerprint that is used for bigger windows, to increase the likelihood of a
@@ -56,9 +60,16 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 	@SuppressWarnings("ConstructorWithTooManyParameters")
 	public NlfiedlerRustChunkerCore(final int expectedSize, final int minSize, final int maxSize, final long[] gear,
 			final long maskSmall, final long maskLarge) {
-		this.expectedSize = expectedSize;
-		this.minSize = minSize;
-		this.maxSize = maxSize;
+		Validations.require(minSize <= expectedSize, "Min size must be less equals expected size");
+		Validations.require(maxSize >= expectedSize, "Max size must be greater equals expected size");
+		Objects.requireNonNull(gear);
+		//noinspection MagicNumber
+		Validations.require(gear.length == 256,
+				"Gear must have a length of 256, one hash per byte value, was: " + gear.length);
+
+		this.expectedSize = Validations.requirePositive(expectedSize, "Expected size");
+		this.minSize = Validations.requirePositive(minSize, "Min size");
+		this.maxSize = Validations.requirePositive(maxSize, "Max size");
 		this.gear = gear.clone();
 		this.maskSmall = maskSmall;
 		this.maskLarge = maskLarge;
@@ -66,6 +77,11 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 
 	@Override
 	public byte[] readNextChunk(final InputStream stream, final long size, final long currentOffset) {
+		Objects.requireNonNull(stream);
+		Validations.requirePositiveNonZero(size, "Size");
+		Validations.requirePositive(currentOffset, "Current offset");
+		Validations.require(currentOffset < size, "Current offset must be less than size");
+
 		try (final ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream()) {
 			int normalSize = expectedSize;
 			//noinspection StandardVariableNames
