@@ -49,6 +49,7 @@ final class PatchBenchmark {
 
 		List<String> patchDataLines = new ArrayList<>();
 		patchDataLines.add("patch,name,fsc2mb,fastcdc2mb,fastcdc8kb");
+		//		patchDataLines.add("patch,name,rtpal262kb");
 		List<String> buildDataLines = new ArrayList<>();
 		buildDataLines.add("version,name,size");
 		int i = 1;
@@ -69,6 +70,7 @@ final class PatchBenchmark {
 			descriptionToChunker.put("fastcdc8kb", new ChunkerBuilder().fastCdc()
 					.setExpectedChunkSize(8 * 1024)
 					.build());
+			//			descriptionToChunker.put("rtpal262kb", new RtpalChunker());
 
 			System.out.printf("Summary for patching from previous (%s) to current (%s):%n", comparison.getKey(),
 					comparison.getValue());

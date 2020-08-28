@@ -9,14 +9,6 @@ import de.zabuza.fastcdc4j.external.chunking.ChunkMetadata;
  */
 public final class SimpleChunkMetadata implements ChunkMetadata {
 	/**
-	 * The offset of this chunk, with respect to its source data stream.
-	 */
-	private final long offset;
-	/**
-	 * The length of this chunk, i.e. the amount of contained data.
-	 */
-	private final int length;
-	/**
 	 * A binary hash representation of the contained data. Using the algorithm specified during construction by the
 	 * {@link de.zabuza.fastcdc4j.external.chunking.Chunker}.
 	 */
@@ -26,6 +18,14 @@ public final class SimpleChunkMetadata implements ChunkMetadata {
 	 * {@link de.zabuza.fastcdc4j.external.chunking.Chunker}.
 	 */
 	private final String hexHash;
+	/**
+	 * The length of this chunk, i.e. the amount of contained data.
+	 */
+	private final int length;
+	/**
+	 * The offset of this chunk, with respect to its source data stream.
+	 */
+	private final long offset;
 
 	/**
 	 * Creates a new simple chunk.
@@ -46,16 +46,6 @@ public final class SimpleChunkMetadata implements ChunkMetadata {
 	}
 
 	@Override
-	public long getOffset() {
-		return offset;
-	}
-
-	@Override
-	public int getLength() {
-		return length;
-	}
-
-	@Override
 	public byte[] getHash() {
 		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		return hash;
@@ -64,5 +54,15 @@ public final class SimpleChunkMetadata implements ChunkMetadata {
 	@Override
 	public String getHexHash() {
 		return hexHash;
+	}
+
+	@Override
+	public int getLength() {
+		return length;
+	}
+
+	@Override
+	public long getOffset() {
+		return offset;
 	}
 }

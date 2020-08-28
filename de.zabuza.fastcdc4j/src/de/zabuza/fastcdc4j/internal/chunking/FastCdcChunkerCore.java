@@ -19,14 +19,6 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	 */
 	private final int expectedSize;
 	/**
-	 * The minimal size for a single chunk, in bytes.
-	 */
-	private final int minSize;
-	/**
-	 * The maximal size for a single chunk, in bytes.
-	 */
-	private final int maxSize;
-	/**
 	 * The hash table, also known as {@code gear} used as noise to improve the splitting behavior for relatively similar
 	 * content.
 	 */
@@ -39,6 +31,14 @@ public final class FastCdcChunkerCore implements IterativeStreamChunkerCore {
 	 * Mask for the fingerprint that is used for smaller windows, to decrease the likelihood of a split.
 	 */
 	private final long maskSmall;
+	/**
+	 * The maximal size for a single chunk, in bytes.
+	 */
+	private final int maxSize;
+	/**
+	 * The minimal size for a single chunk, in bytes.
+	 */
+	private final int minSize;
 
 	/**
 	 * Creates a new core.

@@ -49,14 +49,6 @@ public final class IterativeStreamChunker implements Chunker {
 	 */
 	private static final class ChunkerIterator implements Iterator<Chunk> {
 		/**
-		 * The amount of bytes available in the stream that are subject to be chunked.
-		 */
-		private final long size;
-		/**
-		 * The data stream to chunk.
-		 */
-		private final InputStream stream;
-		/**
 		 * The core to use for chunking.
 		 */
 		private final IterativeStreamChunkerCore core;
@@ -64,6 +56,14 @@ public final class IterativeStreamChunker implements Chunker {
 		 * The method to use for hashing the data of a chunk.
 		 */
 		private final String hashMethod;
+		/**
+		 * The amount of bytes available in the stream that are subject to be chunked.
+		 */
+		private final long size;
+		/**
+		 * The data stream to chunk.
+		 */
+		private final InputStream stream;
 		/**
 		 * The current offset in the data stream, marking the beginning of the next chunk.
 		 */

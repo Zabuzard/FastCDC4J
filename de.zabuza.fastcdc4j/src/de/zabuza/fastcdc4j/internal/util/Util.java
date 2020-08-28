@@ -12,14 +12,14 @@ import java.security.NoSuchAlgorithmException;
 public enum Util {
 	;
 	/**
-	 * All characters available in the hexadecimal-system, as UTF-8 encoded array.
-	 */
-	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
-	/**
 	 * Small delta to counter floating point issues when rounding down would accidentally round down a full integer to
 	 * much.
 	 */
 	private static final double FLOATING_DELTA = 1.0e-12;
+	/**
+	 * All characters available in the hexadecimal-system, as UTF-8 encoded array.
+	 */
+	private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
 
 	/**
 	 * Creates a hexadecimal representation of the given binary data.

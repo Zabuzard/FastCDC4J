@@ -19,20 +19,6 @@ public interface Chunk {
 	byte[] getData();
 
 	/**
-	 * Gets the offset of this chunk, with respect to its source data stream.
-	 *
-	 * @return The offset
-	 */
-	long getOffset();
-
-	/**
-	 * The length of this chunk, i.e. the amount of contained data.
-	 *
-	 * @return Gets the length
-	 */
-	int getLength();
-
-	/**
 	 * A binary hash representation of the contained data. Using the algorithm specified during construction by the
 	 * {@link Chunker}.
 	 *
@@ -47,6 +33,20 @@ public interface Chunk {
 	 * @return A hexadecimal hash representation
 	 */
 	String getHexHash();
+
+	/**
+	 * The length of this chunk, i.e. the amount of contained data.
+	 *
+	 * @return Gets the length
+	 */
+	int getLength();
+
+	/**
+	 * Gets the offset of this chunk, with respect to its source data stream.
+	 *
+	 * @return The offset
+	 */
+	long getOffset();
 
 	/**
 	 * Converts this chunk to its corresponding metadata.

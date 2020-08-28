@@ -95,16 +95,14 @@ final class PatchSummary {
 		//				.setMaskGenerationSeed(4)
 		//				.build());
 
-		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild,
-				currentBuild);
+		System.out.printf("Summary for patching from previous (%s) to current (%s):%n", previousBuild, currentBuild);
 		System.out.println();
 		descriptionToChunker.forEach(
 				(description, chunker) -> PatchSummary.executePatchSummary(description, chunker, previousBuild,
-					currentBuild));
+						currentBuild));
 	}
 
-	static PatchSummary computePatchSummary(final Chunker chunker, final Path previousBuild,
-			final Path currentBuild) {
+	static PatchSummary computePatchSummary(final Chunker chunker, final Path previousBuild, final Path currentBuild) {
 		final List<ChunkMetadata> previousChunks = Collections.synchronizedList(new ArrayList<>());
 		chunkPath(chunker, previousBuild, chunk -> previousChunks.add(chunk.toChunkMetadata()));
 		final BuildSummary previousBuildSummary = new BuildSummary(previousChunks);
@@ -114,6 +112,42 @@ final class PatchSummary {
 		final BuildSummary currentBuildSummary = new BuildSummary(currentChunks);
 
 		return new PatchSummary(previousBuildSummary, currentBuildSummary);
+	}
+
+	static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
+			final Path currentBuild) {
+		final PatchSummary summary = computePatchSummary(chunker, previousBuild, currentBuild);
+		System.out.println("==== " + description);
+		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
+				"Build summary previous:", bytesToReadable(summary.getPreviousBuildSummary()
+						.getTotalSize()), summary.getPreviousBuildSummary()
+						.getTotalChunksCount(), bytesToReadable(summary.getPreviousBuildSummary()
+						.getTotalUniqueSize()), summary.getPreviousBuildSummary()
+						.getUniqueChunksCount());
+		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
+				"Build summary current:", bytesToReadable(summary.getCurrentBuildSummary()
+						.getTotalSize()), summary.getCurrentBuildSummary()
+						.getTotalChunksCount(), bytesToReadable(summary.getCurrentBuildSummary()
+						.getTotalUniqueSize()), summary.getCurrentBuildSummary()
+						.getUniqueChunksCount());
+		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics previous:",
+				bytesToReadable(summary.getPreviousBuildSummary()
+						.getAverageChunkSize()), summary.getPreviousBuildSummary()
+						.getDeduplicationRatio());
+		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics current:",
+				bytesToReadable(summary.getCurrentBuildSummary()
+						.getAverageChunkSize()), summary.getCurrentBuildSummary()
+						.getDeduplicationRatio());
+		System.out.printf("%-25s %12s%n", "Patch size:", bytesToReadable(summary.getPatchSize()));
+		System.out.printf("%-25s %12d%n", "Chunks to add:", summary.getChunksToAdd()
+				.size());
+		System.out.printf("%-25s %12d%n", "Chunks to remove:", summary.getChunksToRemove()
+				.size());
+		System.out.printf("%-25s %12d%n", "Chunks to move:", summary.getChunksToMove()
+				.size());
+		System.out.printf("%-25s %12d%n", "Untouched chunks:", summary.getUntouchedChunks()
+				.size());
+		System.out.println();
 	}
 
 	private static String bytesToReadable(long bytes) {
@@ -193,42 +227,6 @@ final class PatchSummary {
 		}
 	}
 
-	static void executePatchSummary(final String description, final Chunker chunker, final Path previousBuild,
-			final Path currentBuild) {
-		final PatchSummary summary = computePatchSummary(chunker, previousBuild, currentBuild);
-		System.out.println("==== " + description);
-		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary previous:", bytesToReadable(summary.getPreviousBuildSummary()
-						.getTotalSize()), summary.getPreviousBuildSummary()
-						.getTotalChunksCount(), bytesToReadable(summary.getPreviousBuildSummary()
-						.getTotalUniqueSize()), summary.getPreviousBuildSummary()
-						.getUniqueChunksCount());
-		System.out.printf("%-25s %12s total size, %12d total chunks, %12s unique size, %12d unique chunks%n",
-				"Build summary current:", bytesToReadable(summary.getCurrentBuildSummary()
-						.getTotalSize()), summary.getCurrentBuildSummary()
-						.getTotalChunksCount(), bytesToReadable(summary.getCurrentBuildSummary()
-						.getTotalUniqueSize()), summary.getCurrentBuildSummary()
-						.getUniqueChunksCount());
-		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics previous:",
-				bytesToReadable(summary.getPreviousBuildSummary()
-						.getAverageChunkSize()), summary.getPreviousBuildSummary()
-						.getDeduplicationRatio());
-		System.out.printf("%-25s %12s average chunk size, %12.2f%% deduplication ratio%n", "Build metrics current:",
-				bytesToReadable(summary.getCurrentBuildSummary()
-						.getAverageChunkSize()), summary.getCurrentBuildSummary()
-						.getDeduplicationRatio());
-		System.out.printf("%-25s %12s%n", "Patch size:", bytesToReadable(summary.getPatchSize()));
-		System.out.printf("%-25s %12d%n", "Chunks to add:", summary.getChunksToAdd()
-				.size());
-		System.out.printf("%-25s %12d%n", "Chunks to remove:", summary.getChunksToRemove()
-				.size());
-		System.out.printf("%-25s %12d%n", "Chunks to move:", summary.getChunksToMove()
-				.size());
-		System.out.printf("%-25s %12d%n", "Untouched chunks:", summary.getUntouchedChunks()
-				.size());
-		System.out.println();
-	}
-
 	private static String secondsToReadable(long seconds) {
 		StringBuilder sb = new StringBuilder();
 		boolean entered = false;
@@ -277,6 +275,10 @@ final class PatchSummary {
 		return currentBuildSummary;
 	}
 
+	long getPatchSize() {
+		return patchSize;
+	}
+
 	BuildSummary getPreviousBuildSummary() {
 		return previousBuildSummary;
 	}
@@ -318,10 +320,6 @@ final class PatchSummary {
 
 	private List<ChunkMetadata> getChunksToRemove() {
 		return Collections.unmodifiableList(chunksToRemove);
-	}
-
-	long getPatchSize() {
-		return patchSize;
 	}
 
 	private List<ChunkMetadata> getUntouchedChunks() {

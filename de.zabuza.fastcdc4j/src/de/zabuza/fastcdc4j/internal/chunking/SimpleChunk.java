@@ -16,10 +16,6 @@ public final class SimpleChunk implements Chunk {
 	 */
 	private final byte[] data;
 	/**
-	 * The offset of this chunk, with respect to its source data stream.
-	 */
-	private final long offset;
-	/**
 	 * A binary hash representation of the contained data. Using the algorithm specified during construction by the
 	 * {@link de.zabuza.fastcdc4j.external.chunking.Chunker}.
 	 */
@@ -29,6 +25,10 @@ public final class SimpleChunk implements Chunk {
 	 * {@link de.zabuza.fastcdc4j.external.chunking.Chunker}.
 	 */
 	private final String hexHash;
+	/**
+	 * The offset of this chunk, with respect to its source data stream.
+	 */
+	private final long offset;
 
 	/**
 	 * Creates a new simple chunk.
@@ -56,16 +56,6 @@ public final class SimpleChunk implements Chunk {
 	}
 
 	@Override
-	public long getOffset() {
-		return offset;
-	}
-
-	@Override
-	public int getLength() {
-		return data.length;
-	}
-
-	@Override
 	public byte[] getHash() {
 		//noinspection AssignmentOrReturnOfFieldWithMutableType
 		return hash;
@@ -74,5 +64,15 @@ public final class SimpleChunk implements Chunk {
 	@Override
 	public String getHexHash() {
 		return hexHash;
+	}
+
+	@Override
+	public int getLength() {
+		return data.length;
+	}
+
+	@Override
+	public long getOffset() {
+		return offset;
 	}
 }
