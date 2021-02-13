@@ -1,5 +1,10 @@
 # FastCDC4J
-[![maven-central](https://img.shields.io/maven-central/v/io.github.zabuzard.fastcdc4j/fastcdc4j)](https://img.shields.io/maven-central/v/io.github.zabuzard.fastcdc4j/fastcdc4j) [![javadoc](https://javadoc.io/badge2/io.github.zabuzard.fastcdc4j/fastcdc4j/javadoc.svg?style=flat)](https://javadoc.io/doc/io.github.zabuzard.fastcdc4j/fastcdc4j) [![Java](https://img.shields.io/badge/Java-14%2B-ff696c)](https://img.shields.io/badge/Java-14%2B-ff696c) [![license](https://img.shields.io/github/license/Zabuzard/FastCDC4J)](https://img.shields.io/github/license/Zabuzard/FastCDC4J)
+
+[![codefactor](https://img.shields.io/codefactor/grade/github/Zabuzard/FastCDC4J)](https://www.codefactor.io/repository/github/zabuzard/fastcdc4j)
+[![maven-central](https://img.shields.io/maven-central/v/io.github.zabuzard.fastcdc4j/fastcdc4j)](https://search.maven.org/search?q=g:io.github.zabuzard.fastcdc4j)
+[![javadoc](https://javadoc.io/badge2/io.github.zabuzard.fastcdc4j/fastcdc4j/javadoc.svg?style=flat&color=AA82FF)](https://javadoc.io/doc/io.github.zabuzard.fastcdc4j/fastcdc4j)
+![Java](https://img.shields.io/badge/Java-14%2B-ff696c)
+[![license](https://img.shields.io/github/license/Zabuzard/FastCDC4J)](https://github.com/Zabuzard/FastCDC4J/blob/master/LICENSE)
 
 FastCDC4J is a fast and efficient content-defined chunking solution for
 data deduplication implementing the FastCDC algorithm and offering the
