@@ -115,7 +115,7 @@ public final class MaskGenerator {
 	 * @return The generated mask
 	 */
 	public long generateLargeMask() {
-		return generateMask(normalizationLevel);
+		return generateMask(-normalizationLevel);
 	}
 
 	/**
@@ -124,7 +124,7 @@ public final class MaskGenerator {
 	 * @return The generated mask
 	 */
 	public long generateSmallMask() {
-		return generateMask(-normalizationLevel);
+		return generateMask(normalizationLevel);
 	}
 
 	/**
