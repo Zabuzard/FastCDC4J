@@ -101,7 +101,7 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 
 			long fingerprint = 0;
 			int i = minSize;
-			dataBuffer.write(stream.readNBytes(i));
+			dataBuffer.write(stream.readNBytes(i - 1));
 
 			//noinspection ForLoopWithMissingComponent
 			for (; i < normalSize; i++) {
@@ -129,6 +129,12 @@ public final class NlfiedlerRustChunkerCore implements IterativeStreamChunkerCor
 					return dataBuffer.toByteArray();
 				}
 			}
+
+			final int data = stream.read();
+			if (data == -1) {
+				throw new IllegalStateException("Attempting to read a byte from the stream but the stream has ended");
+			}
+			dataBuffer.write(data);
 
 			return dataBuffer.toByteArray();
 		} catch (final IOException e) {
